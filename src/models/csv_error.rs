@@ -7,6 +7,7 @@ use std::io::Error;
 pub enum CsvError {
     IO(String),
     Parse(i32,i32,String),
+    Decode(String),
     FileError(String),
     Unknow
 
@@ -23,6 +24,9 @@ impl Display for CsvError {
             }
             CsvError::FileError(e) => {
                 write!(f, "File Error: {}", e)
+            }
+            CsvError::Decode(e) => {
+                write!(f, "Error decoding: {}", e)
             }
             CsvError::Unknow => {
                 write!(f, "Unknown error")

@@ -5,7 +5,7 @@ pub fn find_line_break(map: &Mmap, cursor: usize, new_line: u8) -> Option<(usize
     if cursor >= map.len() {
         return None;
     }
-    // Get Reference of 
+    // Get Reference of bytes of file
     let slice = &map[cursor..];
 
     // Buscamos el próximo salto de línea

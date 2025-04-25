@@ -53,48 +53,41 @@ impl CsvReaderWithMap {
         })
     }
 
-    pub fn next(&mut self) -> Option<&[u8]> {
+    pub fn next(&mut self) -> Result<Option<&[u8]>, CsvError> {
         //Determine de separator
         let sp = self.config.line_break;
         //Implementar una manera de obtener los chucks hasta el separador de linea
-        
+
         let next_take = find_line_break(
             &self.mmap,
             self.cursor,
             sp
         );
         match next_take {
-            Some((line, cursor)) => {
-                
+            Some((from, to)) => {
+                // Store the new index of the cursor
+                self.cursor = to;
+                // Get line reference
+                let line = &self.mmap[from..to];
+                //Decode bytes using provided encoder
+                let (_cow, _encoding_used, had_errors) = self.config.encoder.decode(line);
+                if had_errors {
+                    return Err(
+                        CsvError::Decode("Failed to decode line".to_string())
+                    )
+                }
+
             },
             None => {
                 if self.cursor == self.mmap.len() {
                     //Means the EOF
-                    return None;
+                    return Ok(None);
                 }
-                
-                return None;
+
+                return Ok(None);
             }
         }
-        
-        
-
-        let mmap_len = self.mmap.len();
-        if self.cursor >= mmap_len {
-            return None;
-        }
-
-        let slice = &self.mmap[self.cursor..];
-
-        // Buscamos el próximo salto de línea
-        if let Some(rel_end) = slice.iter().position(|&b| b == b'\n') {
-            let end = self.cursor + rel_end + 1;
-            let line = &self.mmap[self.cursor..end];
-
-            // Actualizamos el cursor
-            self.cursor = end;
-        }
-        None
+        Ok(None)
     }
 }
 
@@ -113,7 +106,7 @@ mod tests {
         println!("Performed in :{:?}", time.elapsed());
         assert!(file.is_ok());
     }
-    
+
     #[test]
     fn test_open_file_dont_exists() {
         let cfg = CsvConfig::default();
