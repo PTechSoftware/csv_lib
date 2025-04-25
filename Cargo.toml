@@ -1,0 +1,8 @@
+[package]
+name = "csv_lib"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+encoding_rs = "0.8.35"
+memmap2 = "0.9.5"
