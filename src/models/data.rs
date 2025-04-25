@@ -6,6 +6,7 @@ use std::any::Any;
 #[derive(Debug)]
 #[allow(dead_code)]
 pub enum Data{
+    TextRef(&'static str),
     Text(String),
     Byte(i8),
     UByte(u8),
@@ -20,7 +21,7 @@ pub enum Data{
     Boolean(bool),
     Custom(Box<dyn Any>),//Usefull to use with chrono for example.
     Empty,
-    AutoDetect(String)
+    AutoDetect(&'static str)
 }
 
 
@@ -30,12 +31,15 @@ impl std::fmt::Display for Data{
     ///
     /// ### Use case:
     /// ```
+    /// use csv_lib::models::data::Data;
     /// let d = Data::Text(String::from("hello"));
     /// println!("{}", d);
     /// ```
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Data::Text(v) => {
+                write!(f, "{}", v)}   
+            Data::TextRef(v) => {
                 write!(f, "{}", v)}
             Data::Byte(v) => {
                 write!(f, "{}", v)}

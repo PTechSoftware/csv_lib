@@ -4,6 +4,7 @@ use crate::models::data::Data;
 use memmap2::Mmap;
 use std::fs::File;
 use std::path::Path;
+use crate::extensions::slice_extension::LineDeserialize;
 use crate::helpers::bytes_helper::find_line_break;
 
 #[allow(dead_code)]
@@ -56,8 +57,7 @@ impl CsvReaderWithMap {
     pub fn next(&mut self) -> Result<Option<&[u8]>, CsvError> {
         //Determine de separator
         let sp = self.config.line_break;
-        //Implementar una manera de obtener los chucks hasta el separador de linea
-
+        //Determine the line break cursor position
         let next_take = find_line_break(
             &self.mmap,
             self.cursor,
@@ -70,24 +70,35 @@ impl CsvReaderWithMap {
                 // Get line reference
                 let line = &self.mmap[from..to];
                 //Decode bytes using provided encoder
-                let (_cow, _encoding_used, had_errors) = self.config.encoder.decode(line);
+                let (cow, _encoding_used, had_errors) = self.config.encoder.decode(line);
+                //CheckErrors
                 if had_errors {
                     return Err(
                         CsvError::Decode("Failed to decode line".to_string())
                     )
+                }else{
+                    let fields = cow.fields_count(sp);
                 }
+                
 
             },
             None => {
-                if self.cursor == self.mmap.len() {
+                if self.cursor >= self.mmap.len() {
                     //Means the EOF
                     return Ok(None);
                 }
-
                 return Ok(None);
             }
         }
         Ok(None)
+    }
+
+    #[allow(dead_code)]
+    fn reset_cursor(&mut self){
+        match self.config.omit_header{
+            true => self.cursor = 1,
+            false => self.cursor = 0
+        }
     }
 }
 

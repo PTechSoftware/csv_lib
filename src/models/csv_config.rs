@@ -24,7 +24,7 @@ impl Default for CsvConfig {
         let del = vec![b';'];
         Self {
             delimiters :del,
-            string_separators :b'"',
+            string_separators :0u8,
             line_break: b'\n',
             omit_header: true,
             parallel :false,
