@@ -1,7 +1,7 @@
 use crate::models::datatype::DataType;
 use encoding_rs::{Encoding, WINDOWS_1252};
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 #[allow(dead_code)]
 pub struct CsvConfig {
     /// A Vec<u8> with the byte of the chars that can be considered as delimiter.
@@ -15,7 +15,7 @@ pub struct CsvConfig {
     /// Defines de encoding used to open the file.
     pub encoder : &'static Encoding,
     /// A map used to register the expected type of each column.
-    pub type_map: Vec<DataType>
+    type_map: Vec<DataType>
 }
 
 
@@ -55,5 +55,22 @@ impl CsvConfig {
             encoder,
             type_map,
         }
+    }
+    
+    
+    /// get_data_type
+    /// 
+    /// # Arguments 
+    /// 
+    /// * `index`: the 0 based index of the column
+    /// 
+    /// returns: &DataType maped for the col, or `DataType::Autodetect`
+    pub fn get_data_type(&self, index : usize) -> &DataType {
+        if index <= self.type_map.len() && self.type_map.len() != 0 {
+            &self.type_map[index]
+        }else { 
+            &DataType::AutoDetect
+        }
+        
     }
 }

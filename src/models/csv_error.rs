@@ -3,6 +3,7 @@ use std::io;
 use std::io::Error;
 
 #[derive(Debug)]
+#[derive(Clone)]
 #[allow(dead_code)]
 pub enum CsvError {
     IO(String),
