@@ -54,6 +54,12 @@ impl CsvReaderWithMap {
         })
     }
 
+    /// ## Next Function
+    /// - Intend to get the next row slice.
+    /// - Is able to detect the EOF
+    /// `return` : a `Result` with an `Option` of `&[u8]`
+    /// The result is able to handle the errors while opening and decoding the file.
+    /// Otherwise, the `Option`
     pub fn next(&mut self) -> Result<Option<&[u8]>, CsvError> {
         //Determine de separator
         let sp = self.config.line_break;
@@ -63,33 +69,7 @@ impl CsvReaderWithMap {
             self.cursor,
             sp
         );
-        match next_take {
-            Some((from, to)) => {
-                // Store the new index of the cursor
-                self.cursor = to;
-                // Get line reference
-                let line = &self.mmap[from..to];
-                //Decode bytes using provided encoder
-                let (cow, _encoding_used, had_errors) = self.config.encoder.decode(line);
-                //CheckErrors
-                if had_errors {
-                    return Err(
-                        CsvError::Decode("Failed to decode line".to_string())
-                    )
-                }else{
-                    let fields = cow.fields_count(sp);
-                }
-                
-
-            },
-            None => {
-                if self.cursor >= self.mmap.len() {
-                    //Means the EOF
-                    return Ok(None);
-                }
-                return Ok(None);
-            }
-        }
+        
         Ok(None)
     }
 

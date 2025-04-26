@@ -1,5 +1,5 @@
+use crate::models::datatype::DataType;
 use encoding_rs::{Encoding, WINDOWS_1252};
-use crate::models::data::Data;
 
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -15,7 +15,7 @@ pub struct CsvConfig {
     /// Defines de encoding used to open the file.
     pub encoder : &'static Encoding,
     /// A map used to register the expected type of each column.
-    pub type_map: Vec<Data>
+    pub type_map: Vec<DataType>
 }
 
 
@@ -30,6 +30,30 @@ impl Default for CsvConfig {
             parallel :false,
             encoder:WINDOWS_1252,
             type_map:Vec::new()
+        }
+    }
+}
+
+impl CsvConfig {
+
+    #[allow(dead_code)]
+    pub fn new(
+        delimiters: Vec<u8>,
+        string_separators: u8,
+        line_break: u8,
+        omit_header: bool,
+        parallel: bool,
+        encoder: &'static Encoding,
+        type_map: Vec<DataType>,
+    ) -> Self {
+        Self {
+            delimiters,
+            string_separators,
+            line_break,
+            omit_header,
+            parallel,
+            encoder,
+            type_map,
         }
     }
 }
