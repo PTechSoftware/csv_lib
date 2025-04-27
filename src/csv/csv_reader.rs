@@ -1,9 +1,12 @@
-use crate::extensions::slice_extension::LineDeserialize;
-use crate::helpers::bytes_helper::find_line_break;
-use crate::io::parser::parse_field;
+#[cfg(target_arch = "x86_64")]
+use crate::helpers::bytes_helper::locate_line_break_avx2;
+#[cfg(target_arch = "aarch64")]
+use crate::helpers::bytes_helper::locate_line_break_neon;
+use crate::helpers::bytes_helper::locate_line_break_memchr3;
 use crate::models::csv_config::CsvConfig;
 use crate::models::csv_error::CsvError;
 use crate::models::data::Data;
+use crate::models::platform_info::PlatformInfo;
 use memmap2::Mmap;
 use std::fs::File;
 use std::path::Path;
@@ -13,6 +16,7 @@ use std::path::Path;
 pub struct CsvReaderWithMap {
     config: CsvConfig,
     mmap: Mmap,
+    platform : PlatformInfo,
     cursor: usize,
 }
 
@@ -41,10 +45,13 @@ impl CsvReaderWithMap {
         let mmap = unsafe {
             Mmap::map(&file).map_err(|bad| CsvError::FileError(format!("Cannot map file. Detail: {}", bad)))?
         };
+        // Obtain platform info
+        let pl = PlatformInfo::new();
 
         // Return expected CSV Reader WithMap
         Ok(CsvReaderWithMap {
             config,
+            platform : pl,
             mmap,
             cursor : 0usize,
         })
@@ -56,6 +63,7 @@ impl CsvReaderWithMap {
     ///
     /// `return` : an `Option` of `Vec<Data>`
     pub fn next_with_vec(&mut self) -> Option<Vec<Data>> {
+        /*
         let enc = self.config.encoder;
         let sp = self.config.line_break;
         //Determine the slice
@@ -108,7 +116,8 @@ impl CsvReaderWithMap {
                 // Return the row
                 Some(output)
             }
-        }
+        }*/
+        todo!()
     }
 
     /// ## next_raw Function
@@ -118,10 +127,100 @@ impl CsvReaderWithMap {
     /// `return` : an `Option` of `&[u8]`
     #[allow(dead_code)]
     pub fn next_raw(&mut self) -> Option<&[u8]> {
+        //If we move here the cfg, and target compariision, is faster. only doit once, and not on each line iter.
+        if self.config.force_memcach3 {
+            return self.next_raw_memcachr3()
+        }
+        #[cfg(target_arch = "x86_64")]
+        {
+            //En x86, si soporta avx2 lo uso
+            if is_x86_feature_detected!("avx2") {
+                return  self.new_raw_avx2()
+            }
+        }
+        #[cfg(target_arch = "aarch64")]{
+            return  self.new_raw_neon()
+        }
+    }
+
+
+
+    //.......... PRIVATE ............../
+
+    #[cfg(target_arch = "aarch64")]
+    fn new_raw_neon(&mut self) -> Option<&[u8]> {
+        unsafe {
+            // Obtain the unmapped slice starting from the cursor
+            let slice = &self.mmap[self.cursor..];
+            // Locate the break index
+            match locate_line_break_neon(slice, self.config.line_break) {
+                0 => {
+                    // EOF, reset cursor
+                    self.reset_cursor();
+                    None
+                }
+                sep_index => {
+                    // Correctly extract the row WITHOUT including the separator
+                    let row = &self.mmap[self.cursor..self.cursor + sep_index];
+
+                    // Now we must remove the separator bytes at the end
+                    // Check if row ends with \r\n
+                    let end = if row.ends_with(b"\r\n") {
+                        2
+                    } else if row.ends_with(&[b'\n']) || row.ends_with(&[b'\r']) {
+                        1
+                    } else {
+                        0 // in case of custom separator (or no separator)
+                    };
+
+                    // Final row slice without line break or separator
+                    let row = &row[..row.len() - end];
+
+                    // Move the cursor forward to after the separator
+                    self.cursor += sep_index;
+
+                    Some(row)
+                }
+            }
+        }
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[target_feature(enable = "avx2")]
+    fn new_raw_avx2(&mut self) -> Option<&[u8]> {
+        unsafe {
+            //determine the tos end slice
+            let slice = &self.mmap[self.cursor ..];
+            //Determine the line break cursor position
+            match locate_line_break_avx2(
+                slice,
+                self.cursor,
+                self.config.line_break
+            ) {
+                0 => {
+                    //EOF, so, reset cursor
+                    self.reset_cursor();
+                    None
+                }
+                i => {
+                    //Take a reference of the map file
+                    let map =  &self.mmap[..];
+                    //Return the byte slice of a row
+                    let row = &map[self.cursor .. i];
+                    //Move the cursor position
+                    self.cursor = i;
+                    //Extract the byte line
+                    Some(row)
+                }
+            }
+        }
+    }
+
+    fn next_raw_memcachr3(&mut self) -> Option<&[u8]> {
         //determine the tos end slice
         let slice = &self.mmap[self.cursor ..];
         //Determine the line break cursor position
-        match find_line_break(
+        match locate_line_break_memchr3(
             slice,
             self.cursor,
             self.config.line_break
@@ -143,10 +242,6 @@ impl CsvReaderWithMap {
             }
         }
     }
-
-
-
-    //.......... PRIVATE ............../
 
     #[allow(dead_code)]
     /// Reset the cursor of the Mmap File
@@ -205,6 +300,7 @@ mod tests {
         let mut cfg = CsvConfig::default();
         cfg.line_break = b'\n';
         cfg.delimiter = b',';
+        cfg.force_memcach3 = false;
         let file = CsvReaderWithMap::open("data.csv", cfg);
         match file {
             Ok(mut ok) => {

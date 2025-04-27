@@ -4,6 +4,8 @@ use encoding_rs::{Encoding, WINDOWS_1252};
 #[derive(Debug,Clone)]
 #[allow(dead_code)]
 pub struct CsvConfig {
+    /// Force fucntion to use memcachr3. is more compatible, but don't take advantage of NEON / AVX2 feature
+    pub force_memcach3 : bool,
     /// A Vec<u8> with the byte of the chars that can be considered as delimiter.
     pub delimiter: u8,
     pub string_separators: u8,
@@ -19,6 +21,7 @@ pub struct CsvConfig {
 impl Default for CsvConfig {
     fn default() -> Self {
         Self {
+            force_memcach3 : false,
             delimiter : b';',
             string_separators :0u8,
             line_break: b'\n',
@@ -37,8 +40,10 @@ impl CsvConfig {
         line_break: u8,
         encoder: &'static Encoding,
         type_map: Vec<DataType>,
+        force_memcach3: bool
     ) -> Self {
         Self {
+            force_memcach3,
             delimiter,
             string_separators,
             line_break,
