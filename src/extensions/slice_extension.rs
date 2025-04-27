@@ -3,6 +3,7 @@ use crate::models::csv_config::CsvConfig;
 use crate::models::data::Data;
 use encoding_rs::Encoding;
 use std::borrow::Cow;
+use memchr::memchr_iter;
 /******************************************************/
 /***************   TRAITS      ************************/
 /******************************************************/
@@ -42,34 +43,17 @@ impl LineDeserialize for &[u8]{
     }
 
     fn fields_count(self, line_break: u8) -> usize {
-        //Count the number of separators
-        let mut ctr = 0usize;
-        //Check the line
-        for el in self{
-
-            if el == &line_break {
-                ctr = ctr +1;
-            }
-        }
-        //it have number of separator +1 fields
-        ctr+1
+        memchr_iter(line_break, &self).count() + 1
     }
 
     fn fields_count_with_position(self, line_break: u8) -> (usize, Vec<usize>) {
-        //Count the number of separators
-        let mut ctr = 0usize;
-        let mut positions: Vec<usize> = Vec::with_capacity(1000);
-        //Added the begining of the row
+        let mut positions = Vec::with_capacity(1000);
         positions.push(0);
-        //Check the line
-        for (idx,el) in self.iter().enumerate(){
-            if el == &line_break {
-                ctr = ctr +1;
-                positions.push(idx)
-            }
-        }
-        //it have number of separator +1 fields
-        (ctr+1, positions)
+        positions.extend(
+            memchr_iter(line_break, &self)
+        );
+
+        (positions.len(), positions)
     }
 }
 

@@ -56,16 +56,15 @@ impl CsvReaderWithMap {
     ///
     /// `return` : an `Option` of `Vec<Data>`
     pub fn next_with_vec(&mut self) -> Option<Vec<Data>> {
-        //Determine de separator
-        let sp = self.config.line_break;
         let enc = self.config.encoder;
+        let sp = self.config.line_break;
+        //Determine the slice
+        let slice = &self.mmap[self.cursor ..];
         //Determine the line break cursor position
-        let next_take = find_line_break(
-            &self.mmap,
-            self.cursor,
-            sp
-        );
-        match next_take {
+        match find_line_break(
+            slice,
+            self.cursor
+        ) {
             None => {
                 //EOF, so y reset cursor
                 self.reset_cursor();
@@ -73,7 +72,7 @@ impl CsvReaderWithMap {
             }
             Some(tuple) => {
                 //Take a reference of the map file
-                let map =  self.mmap.iter().as_slice();
+                let map =  &self.mmap[ .. ];
                 //Return the byte slice of a row
                 let row = &map[tuple.0 .. tuple.1];
                 //move the cursor to new position
@@ -118,15 +117,13 @@ impl CsvReaderWithMap {
     /// `return` : an `Option` of `&[u8]`
     #[allow(dead_code)]
     pub fn next_raw(&mut self) -> Option<&[u8]> {
-        //Determine de separator
-        let sp = self.config.line_break;
+        //determine the tos end slice
+        let slice = &self.mmap[self.cursor ..];
         //Determine the line break cursor position
-        let next_take = find_line_break(
-            &self.mmap,
-            self.cursor,
-            sp
-        );
-        match next_take {
+        match find_line_break(
+            slice,
+            self.cursor
+        ) {
             None => {
                 //EOF, so y reset cursor
                 self.reset_cursor();
@@ -134,7 +131,7 @@ impl CsvReaderWithMap {
             }
             Some(tuple) => {
                 //Take a reference of the map file
-                let map =  self.mmap.iter().as_slice();
+                let map =  &self.mmap[..];
                 //Return the byte slice of a row
                 let row = &map[tuple.0 .. tuple.1];
                 //Move the cursor position
@@ -159,9 +156,9 @@ impl CsvReaderWithMap {
 
 #[cfg(test)]
 mod tests {
+    use crate::csv::csv_reader::CsvReaderWithMap;
     use crate::models::csv_config::CsvConfig;
     use std::time::Instant;
-    use crate::csv::csv_reader::CsvReaderWithMap;
 
     #[test]
     fn test_open_correct_file() {

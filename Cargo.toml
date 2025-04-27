@@ -5,4 +5,5 @@ edition = "2024"
 
 [dependencies]
 encoding_rs = "0.8.35"
+memchr = "2.7.4"
 memmap2 = "0.9.5"

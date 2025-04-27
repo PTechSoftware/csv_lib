@@ -1,17 +1,11 @@
-use memmap2::Mmap;
+use memchr::memchr2;
 
-pub fn find_line_break(map: &Mmap, cursor: usize, new_line: u8) -> Option<(usize, usize)> {
-    // if the cursor es less than the file lenght, it has no sense, return none
-    if cursor >= map.len() {
-        return None;
-    }
-    // Get Reference of bytes of file
-    let slice = &map[cursor..];
-
-    // Buscamos el próximo salto de línea
-    if let Some(rel_end) = slice.iter().position(|&b| b == new_line) {
-        let end = cursor + rel_end + 1;
-        return Some((cursor, end));
-    }
-    None
+pub fn find_line_break(slice: &[u8],cursor:usize) -> Option<(usize, usize)> {
+    memchr2(b'\n', b'\r', slice).map(|i| {
+        if slice[i] == b'\r' && slice.get(i + 1) == Some(&b'\n') {
+            (cursor, cursor + i + 2) // \r\n
+        } else {
+            (cursor, cursor + i + 1) // \n o \r solo
+        }
+    })
 }
