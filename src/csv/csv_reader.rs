@@ -63,20 +63,21 @@ impl CsvReaderWithMap {
         //Determine the line break cursor position
         match find_line_break(
             slice,
-            self.cursor
+            self.cursor,
+            self.config.line_break
         ) {
-            None => {
+            0 => {
                 //EOF, so y reset cursor
                 self.reset_cursor();
                 return None;
             }
-            Some(tuple) => {
+            i => {
                 //Take a reference of the map file
                 let map =  &self.mmap[ .. ];
                 //Return the byte slice of a row
-                let row = &map[tuple.0 .. tuple.1];
+                let row = &map[self.cursor .. i];
                 //move the cursor to new position
-                self.cursor = tuple.1;
+                self.cursor = i;
                 //Extract the position off the separators, and the number of separators
                 let data = row.fields_count_with_position(sp);
                 let nr_of_separators = data.0;
@@ -122,20 +123,21 @@ impl CsvReaderWithMap {
         //Determine the line break cursor position
         match find_line_break(
             slice,
-            self.cursor
+            self.cursor,
+            self.config.line_break
         ) {
-            None => {
-                //EOF, so y reset cursor
+            0 => {
+                //EOF, so, reset cursor
                 self.reset_cursor();
                 None
             }
-            Some(tuple) => {
+            i => {
                 //Take a reference of the map file
                 let map =  &self.mmap[..];
                 //Return the byte slice of a row
-                let row = &map[tuple.0 .. tuple.1];
+                let row = &map[self.cursor .. i];
                 //Move the cursor position
-                self.cursor = tuple.1;
+                self.cursor = i;
                 //Extract the byte line
                 Some(row)
             }
@@ -182,7 +184,7 @@ mod tests {
     fn test_file_with_vec() {
         let mut cfg = CsvConfig::default();
         cfg.line_break = b'\n';
-        cfg.delimiters = vec![b','];
+        cfg.delimiter = b',';
         let file = CsvReaderWithMap::open("data.csv", cfg);
         match file {
             Ok(mut ok) => {
@@ -202,7 +204,7 @@ mod tests {
     fn test_file_raw() {
         let mut cfg = CsvConfig::default();
         cfg.line_break = b'\n';
-        cfg.delimiters = vec![b','];
+        cfg.delimiter = b',';
         let file = CsvReaderWithMap::open("data.csv", cfg);
         match file {
             Ok(mut ok) => {
