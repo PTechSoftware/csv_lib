@@ -20,8 +20,16 @@
 //! - Optional feature to allow usage from another language (e.g., C#).
 //! - Consider the cost of context switching per iteration.
 //!
-//! Example FFI usage:
-//!
+//! FFI definition. (Read this, if you want to implent it in another language):
+//! You must crate a new project. Use cargo to add this library.
+//! Then, define your export functions in your project. You can create the same functions this library have and make a call.
+//! Be sure to add the `#[no_mangle]` attribute to prevent name mangling, and `extern "C"` to specify the calling convention.
+//! In Cargo.toml , you must add the `#[crate-type = "cdylib"]` attribute to the library target.This will tell cargo to  compile a native library. 
+//! For example in Windows, you will compile a .dll.
+//! 
+//! Then copy the library to your project, the one you do in other language.
+//! 
+//! To connect, or program the definitions of functions, the FFI module usefully, so i add it here:
 //! ```rust
 //! use crate::csv::csv_reader::CsvReaderWithMap;
 //! use crate::models::csv_config::CsvConfig;
