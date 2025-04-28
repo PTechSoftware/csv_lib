@@ -1,1 +1,0 @@
-cargo test --release --package csv_lib --lib csv::csv_reader::tests::test_file_raw -- --exact

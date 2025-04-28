@@ -3,6 +3,11 @@ name = "csv_lib"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+default = []
+ffi = []
+
+
 [dependencies]
 encoding_rs = "0.8.35"
 memchr = "2.7.4"
