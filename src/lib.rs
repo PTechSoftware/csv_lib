@@ -1,6 +1,8 @@
 //! # Csv_lib Crate
 //!
 //! A Rust library to read/write CSV files in the fastest way I know.
+//! 
+//! For further information, you can check the repo [here](https://github.com/PTechSoftware/csv_lib)
 //!
 //! ## 3rd Party Crates Used:
 //!
@@ -146,6 +148,7 @@
 //! ## Performance
 //! This library is designed to process large CSV files.  
 //! Successfully tested on a 1 billion lines CSV file.
+//! To test performance, run in `release` config, it improves a lot the performance
 //!
 //! ## Contact
 //! If you have any questions, contact me on [LinkedIn](https://www.linkedin.com/in/ignacio-p%C3%A9rez-panizza-322844165/)
@@ -166,6 +169,7 @@ mod test {
     use crate::extensions::field_extension::Datable;
     use crate::extensions::row_extension::IterableRow;
     use crate::models::csv_config::CsvConfig;
+    use crate::models::datatype::DataType;
 
     #[test]
     fn read_csv(){
@@ -189,6 +193,15 @@ mod test {
             //This is not efficient, but for demostration works
             let mut rr_str = String::new();
             while let Some(row) = iter.next() {
+                //Count row fields
+                let fields_count = iter.count_fields(cfg.delimiter, cfg.string_separator);
+                println!("Fields count: {}", fields_count);
+                //Extract desired field
+                 if let Some(field_0) = iter.get_field_index(0){
+                     //Get field 0, Id as number
+                     rr_str.push_str(&format!("{},", field_0.get_as_data(&cfg,DataType::Integer)));
+                 }               
+                //Detect the other fields
                 let data = row.get_as_data_autodetect(&cfg);
                 //You can aggregate field, due fmt::Display is already implemented
                 rr_str.push_str(&format!("{},", data));

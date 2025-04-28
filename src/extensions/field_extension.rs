@@ -7,8 +7,9 @@ use crate::models::datatype::DataType;
 /// - Implements a way to convert raw row field, into Data Enum, preserving DataType.
 pub trait Datable{
     /// Extracts a field as `Data` enum. must provided referenced index.
-    fn get_as_data(self, cfg :&CsvConfig, index: usize) -> Data;
+    fn get_as_data_indexed(self, cfg :&CsvConfig, index: usize) -> Data;
 
+    fn get_as_data(self, cfg :&CsvConfig, dt: DataType) -> Data;
     /// Extracts a field as `Data` enum.
     fn get_as_data_autodetect(self, cfg :&CsvConfig) -> Data;
 }
@@ -16,7 +17,7 @@ pub trait Datable{
 
 
 impl Datable for &[u8]{
-    fn get_as_data(self, cfg: &CsvConfig, index: usize) -> Data {
+    fn get_as_data_indexed(self, cfg: &CsvConfig, index: usize) -> Data {
         //Get the encoder
         let enc = cfg.encoder;
         // Decode the field
@@ -33,7 +34,14 @@ impl Datable for &[u8]{
         let (cow, _) = enc.decode_with_bom_removal(self);
         parse_field(cow.as_ref(),&DataType::AutoDetect)
     }
-    
+    fn get_as_data(self, cfg: &CsvConfig, dt: DataType) -> Data {
+        //Get the encoder
+        let enc = cfg.encoder;
+        // Decode the field
+        let (cow, _) = enc.decode_with_bom_removal(self);
+        //Get mapped type
+        parse_field(cow.as_ref(),&dt)
+    }
 }
 
 

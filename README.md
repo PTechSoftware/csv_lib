@@ -54,7 +54,7 @@ cargo add csv_lib --features ffi
 
 ## 🛠️ Basic Usage
 
-### Reading rows and fields from a CSV
+### Reading rows and fields from a CSV. I strongly recommend check Advanced Usage, in this guide
 
 ```rust
 use csv_lib::{CsvReaderWithMap, CsvConfig};
@@ -84,9 +84,6 @@ fn main() {
 The `CsvConfig` structure allows full customization of CSV parsing.
 
 ```rust
-use csv_ultrafast_parser::CsvConfig;
-use encoding_rs::WINDOWS_1252;
-
 let config = CsvConfig::new(
     b',',                  // delimiter
     b'"',                  // string separator (0u8 disables escaping)
@@ -110,39 +107,53 @@ Configurable options:
 
 ---
 
-## 🔥 Advanced Usage: Field Parsing with AutoDetect
+## 🔥 Advanced Usage: 
+
+
+### Field Parsing with AutoDetect, And DataTypes
 
 ```rust
-use csv_ultrafast_parser::CsvReaderWithMap;
-use csv_ultrafast_parser::CsvConfig;
-use encoding_rs::WINDOWS_1252;
-
 fn read_csv() {
+    //Create Config
     let cfg = CsvConfig::new(
         b',',
         0u8,
         b'\n',
-        WINDOWS_1252,
+        encoding_rs::WINDOWS_1252,
         Vec::new(),
         false,
     );
-
-    let mut reader = CsvReaderWithMap::open("data.csv", &cfg).expect("Cannot open CSV");
-
-    while let Some(raw_row) = reader.next_raw() {
+    //Open the file
+    let mut f = match CsvReaderWithMap::open("data.1.csv", &cfg) {
+        Ok(f) => f,
+        Err(e) => panic!("{}", e) //Here is A CsvError struct
+    };
+    // Process Lines (As you can observe, you can pass differents config on each stage, to improve customization)
+    while let Some(raw_row) = f.next_raw() {
+        //Get InRowIter struct
         let mut iter = raw_row.get_iterator(&cfg);
-
-        let mut line_as_string = String::new();
-
-        while let Some(field) = iter.next() {
-            let data = field.get_as_data_autodetect(&cfg);
-            line_as_string.push_str(&format!("{},", data));
+        //Create a string for demostration
+        let mut rr_str = String::new();
+        //Iter between rows
+        while let Some(row) = iter.next() {
+            //Count row fields
+            let fields_count = iter.count_fields(cfg.delimiter, cfg.string_separator);
+            println!("Fields count: {}", fields_count);
+            //Extract desired field
+            if let Some(field_0) = iter.get_field_index(0){
+                //Get field 0, Id as number
+                rr_str.push_str(&format!("{},", field_0.get_as_data(&cfg,DataType::Integer)));
+            }
+            //Detect the other fields
+            let data = row.get_as_data_autodetect(&cfg);
+            //You can aggregate field, due fmt::Display is already implemented
+            rr_str.push_str(&format!("{},", data));
         }
-
-        println!("{}", line_as_string);
+        println!("{}", rr_str);
     }
 }
 ```
+
 
 ---
 
@@ -160,18 +171,20 @@ while let Some(field) = iter.next() {
 }
 ```
 
-Features:
+## 🚀 Features:
 
-| Feature | Description |
-|:--------|:------------|
-| Handles `string_separator` escaping |
-| Supports escaped quotes (`""` → `"`) |
-| Counts fields efficiently |
-| Retrieves field by index |
+| 🚀 Feature                     | 📜 Description                                                                                   |
+|:-------------------------------|:-------------------------------------------------------------------------------------------------|
+| 🔢 Field retrieval by index     | Access any field directly using its column index. if extraction ir raw it dont allocates nothing |
+| 🧩 String separator handling    | Correctly processes fields enclosed with separators.                                             |
+| 📝 Escaped quote support        | Parses embedded quotes inside quoted fields (`""` → `"`).                                        |
+| ⚡ Efficient field counting     | Counts the number of fields in a row without allocation.                                         |
 
 ---
 
 ## 📈 Performance Tips
+
+### **If you are going to test performance of the library, do it in `release` mode. It have a huge difference due the trash lines of code cargo generates in debug profile, and the time of process is awful**
 
 - Use `force_memcach3 = false` to take advantage of SIMD (AVX2 or NEON).
 - Match your `delimiter`, `line_break`, and `string_separator` properly to the file format.
@@ -180,32 +193,30 @@ Features:
 
 ---
 
-## 🧪 Running Tests
+## 🚧 Next Version
 
-Run the built-in test suite:
+- Working to implent AVX512 to the lib, which can handle a larger vector. 
+This feature will be a module feature , due is not compatible with common targets, and is unstable in some Alder Laker (12th Gen Intel) processors.
+- Planned adding parallel processing
+- Planned add async feature
 
-```bash
-cargo test
-```
 
-Tests include:
-- Opening files
-- Handling errors gracefully
-- Reading rows with high performance
-
----
 
 ## 🔗 Useful Links
 
+**The reached performance was possible due this 3 crates**
+
 - [Rust memmap2 crate](https://docs.rs/memmap2/latest/memmap2/)
 - [memchr crate (SIMD optimized)](https://docs.rs/memchr/latest/memchr/)
-- [LinkedIn Profile - Ignacio Pérez Panizza](https://www.linkedin.com/in/ignacio-p%C3%A9rez-panizza-322844165/)
-
+- [encoding_rs crate](https://docs.rs/encoding_rs/latest/encoding_rs/)
 ---
+
+
 
 ## 🏆 Author
 
-Made with passion by **Ignacio Pérez Panizza**  
+Made with passion by **Ignacio Pérez Panizza**  🇺🇾 🧉
+
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue)](https://www.linkedin.com/in/ignacio-p%C3%A9rez-panizza-322844165/)
 
 ---
