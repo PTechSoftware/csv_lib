@@ -1,36 +1,148 @@
 //! # Csv_lib Crate
 //!
-//! A Rust library, to read/write csv in the faster way i know.
+//! A Rust library to read/write CSV files in the fastest way I know.
 //!
 //! ## 3rd Party Crates Used:
-//! To reach the expected performance, this library use 3 crates:
 //!
-//! #### Memmap2
-//! Check this crate [here](https://docs.rs/memmap2/latest/memmap2/)
-//! #### Encoding_rs
-//! Check this crate [here](https://docs.rs/encoding_rs/latest/encoding_rs/)
-//! #### Memchr
-//! Check this crate [here](https://docs.rs/memchr/latest/memchr/index.html)
+//! | Crate | Link |
+//! | :---- | :---- |
+//! | Memmap2 | [memmap2 crate](https://docs.rs/memmap2/latest/memmap2/) |
+//! | Encoding_rs | [encoding_rs crate](https://docs.rs/encoding_rs/latest/encoding_rs/) |
+//! | Memchr | [memchr crate](https://docs.rs/memchr/latest/memchr/) |
 //!
 //! ## Features
 //! - Zero-copy parsing
-//! - Custom Delimiters support.
-//! - Escape String Support
-//! - Direct map from memory
+//! - Custom delimiters support
+//! - Escape string support
+//! - Direct mapping from memory
 //!
 //! ## FFI Support
-//! - As a feature, you can add this library with FFI support.
-//! - This allows you to use this library from another language, for example C#
-//! - You must consider the cost of context change in each iteration.
+//! - Optional feature to allow usage from another language (e.g., C#).
+//! - Consider the cost of context switching per iteration.
+//!
+//! Example FFI usage:
+//!
+//! ```rust
+//! use crate::csv::csv_reader::CsvReaderWithMap;
+//! use crate::models::csv_config::CsvConfig;
+//! use std::ffi::c_char;
+//! use std::ptr;
+//! use encoding_rs::Encoding;
+//!
+//! /// Resolves a code page number to an Encoding.
+//! fn encode_solver(codepage: u32) -> &'static Encoding {
+//!     match codepage {
+//!         932 => encoding_rs::SHIFT_JIS,
+//!         936 => encoding_rs::GBK,
+//!         949 => encoding_rs::EUC_KR,
+//!         950 => encoding_rs::BIG5,
+//!         866 => encoding_rs::IBM866,
+//!         874 => encoding_rs::WINDOWS_874,
+//!         1200 => encoding_rs::UTF_16LE,
+//!         1201 => encoding_rs::UTF_16BE,
+//!         1250 => encoding_rs::WINDOWS_1250,
+//!         1251 => encoding_rs::WINDOWS_1251,
+//!         1252 => encoding_rs::WINDOWS_1252,
+//!         1253 => encoding_rs::WINDOWS_1253,
+//!         1254 => encoding_rs::WINDOWS_1254,
+//!         1255 => encoding_rs::WINDOWS_1255,
+//!         1256 => encoding_rs::WINDOWS_1256,
+//!         1257 => encoding_rs::WINDOWS_1257,
+//!         1258 => encoding_rs::WINDOWS_1258,
+//!         10000 => encoding_rs::MACINTOSH,
+//!         10017 => encoding_rs::X_MAC_CYRILLIC,
+//!         20866 => encoding_rs::KOI8_R,
+//!         20932 => encoding_rs::EUC_JP,
+//!         21866 => encoding_rs::KOI8_U,
+//!         28592 => encoding_rs::ISO_8859_2,
+//!         28593 => encoding_rs::ISO_8859_3,
+//!         28594 => encoding_rs::ISO_8859_4,
+//!         28595 => encoding_rs::ISO_8859_5,
+//!         28596 => encoding_rs::ISO_8859_6,
+//!         28597 => encoding_rs::ISO_8859_7,
+//!         28598 => encoding_rs::ISO_8859_8,
+//!         28603 => encoding_rs::ISO_8859_13,
+//!         28605 => encoding_rs::ISO_8859_15,
+//!         38598 => encoding_rs::ISO_8859_8_I,
+//!         50220 => encoding_rs::ISO_2022_JP,
+//!         54936 => encoding_rs::GB18030,
+//!         65001 => encoding_rs::UTF_8,
+//!         _ => encoding_rs::WINDOWS_1252,
+//!     }
+//! }
+//!
+//! #[cfg(feature = "ffi")]
+//! #[no_mangle]
+//! pub unsafe extern "C" fn csv_reader_new(
+//!     path: *const c_char,
+//!     delimiter: u8,
+//!     string_separator: u8,
+//!     line_ending: u8,
+//!     encoding: u32,
+//! ) -> *mut CsvReaderWithMap {
+//!     if path.is_null() {
+//!         return ptr::null_mut();
+//!     }
+//!     let path = std::ffi::CStr::from_ptr(path).to_string_lossy().into_owned();
+//!     let reader = CsvReaderWithMap::open(
+//!         path,
+//!         &CsvConfig::new(
+//!             delimiter,
+//!             string_separator,
+//!             line_ending,
+//!             encode_solver(encoding),
+//!             Vec::new(),
+//!             false,
+//!         ),
+//!     );
+//!     match reader {
+//!         Ok(reader) => Box::into_raw(Box::new(reader)),
+//!         Err(e) => {
+//!             eprintln!("Error opening CSV file: {}", e);
+//!             ptr::null_mut()
+//!         }
+//!     }
+//! }
+//!
+//! #[cfg(feature = "ffi")]
+//! #[no_mangle]
+//! pub unsafe extern "C" fn destroy_csv_reader(reader: *mut CsvReaderWithMap) {
+//!     if !reader.is_null() {
+//!         drop(Box::from_raw(reader));
+//!     }
+//! }
+//!
+//! #[cfg(feature = "ffi")]
+//! #[no_mangle]
+//! pub unsafe extern "C" fn reader_next_row(reader: *mut CsvReaderWithMap, encoder: u32) -> *mut c_char {
+//!     if reader.is_null() {
+//!         return ptr::null_mut();
+//!     }
+//!     let rdr = &mut *reader;
+//!     let enc = encode_solver(encoder);
+//!     if let Some(row) = rdr.next_raw() {
+//!         let (decoded, _, had_errors) = enc.decode(&row);
+//!         if had_errors {
+//!             return ptr::null_mut();
+//!         }
+//!         match std::ffi::CString::new(decoded.as_bytes()) {
+//!             Ok(cstring) => cstring.into_raw(),
+//!             Err(_) => ptr::null_mut(),
+//!         }
+//!     } else {
+//!         ptr::null_mut()
+//!     }
+//! }
+//! ```
 //!
 //! ## Performance
-//! This library is designed to process large csv files. Tested on an 1.000.000.000 Lines Csv.
-//! If you want you can run a benchmark ;-)
-//!
-//!
+//! This library is designed to process large CSV files.  
+//! Successfully tested on a 1 billion lines CSV file.
 //!
 //! ## Contact
-//! If you have any question, you can contact me on my [LinkedIn](https://www.linkedin.com/in/ignacio-p%C3%A9rez-panizza-322844165/)
+//! If you have any questions, contact me on [LinkedIn](https://www.linkedin.com/in/ignacio-p%C3%A9rez-panizza-322844165/)
+
+
 extern crate core;
 pub mod models;
 pub mod io;

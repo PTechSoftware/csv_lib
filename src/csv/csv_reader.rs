@@ -12,6 +12,7 @@ use std::path::Path;
 
 #[allow(dead_code)]
 #[derive(Debug)]
+#[repr(C)]
 pub struct CsvReaderWithMap {
     config: CsvConfig,
     mmap: Mmap,
@@ -20,8 +21,15 @@ pub struct CsvReaderWithMap {
 }
 
 
+
 impl CsvReaderWithMap {
     //.......... PUBLIC ............../
+    /// Get a reference of the config
+    pub fn get_config(&self) -> &CsvConfig {
+        &self.config
+    }
+    
+    
     /// This Function Generates reader of a file using memmap.
     /// Allows to open the file from a specific path .
     /// `Usage`:
