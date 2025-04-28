@@ -2,6 +2,9 @@ use std::fmt::{Display, Formatter};
 
 #[derive(Debug,Clone,Copy,PartialEq,Eq,PartialOrd,Ord)]
 #[allow(dead_code)]
+/// ## DataType Enum
+/// Holds the datatypes most commons.
+/// Allows to define the expected datatype.
 pub enum DataType {
     TextRef,
     Text,
@@ -21,7 +24,8 @@ pub enum DataType {
     AutoDetect
 }
 
-
+/// ## Display implementation
+/// - Implement the fmt function for the trait.
 impl Display for DataType {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {

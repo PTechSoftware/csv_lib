@@ -3,6 +3,7 @@ use memchr::{memchr2, memchr3};
 //=====================   PUBLIC  FUNCTIONS   =====================//
 //=================================================================//
 
+/// ## Locate Line Break using Memchr3
 /// Locates the line break, using memchr2. Is compatible with CPU made before 2013. (Don't have AVX2 compatibility)
 pub fn locate_line_break_memchr3(slice: &[u8], cursor: usize, separator: u8) -> usize {
     let r = if separator == b'\r' || separator == b'\n' {
@@ -25,6 +26,7 @@ pub fn locate_line_break_memchr3(slice: &[u8], cursor: usize, separator: u8) -> 
     r.unwrap_or_else(|| 0)
 }
 
+/// ## Locate Line Break AVX2
 /// AVX2 Compatible function, to find the line break.
 #[cfg(target_arch = "x86_64")]
 #[target_feature(enable = "avx2")]
@@ -131,6 +133,9 @@ pub unsafe fn locate_line_break_avx2(slice: &[u8], cursor: usize, separator: u8)
     slice.len()
 }
 
+/// ## Locate Line Break NEON
+///
+/// - Finds the next line break, using aarch64 feature NEON.
 #[cfg(target_arch = "aarch64")]
 #[allow(dead_code, unsafe_code)]
 pub unsafe fn locate_line_break_neon(buffer: &[u8], separator: u8) -> usize {

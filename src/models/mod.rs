@@ -3,3 +3,4 @@ pub mod csv_config;
 pub mod csv_error;
 pub mod datatype;
 pub mod platform_info;
+pub mod in_row_iter;

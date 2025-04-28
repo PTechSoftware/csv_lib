@@ -1,13 +1,17 @@
 
 
 #[derive(Debug)]
+/// ## PlatformInfo struct
+/// - A internal struct, that collect info about the flatform were the code is running.
+/// - Set, which function is used, according the features.
 pub struct PlatformInfo{
     pub supports_neon: bool,
     pub supports_avx2: bool,
     pub supports_memcacher3 : bool,
 }
 
-
+/// ## Default implement for PlatformInfo
+/// - By default, disable NEON/ AVX2 support, to improve compatibility.
 impl Default for PlatformInfo {
     fn default() -> Self {
         Self {
@@ -20,6 +24,8 @@ impl Default for PlatformInfo {
 
 
 impl PlatformInfo {
+    /// ## New Function:
+    /// - Creates a new instance of `PlatformInfo`, and check of the mapped features are available.
     pub fn new() -> Self{
         let mut plat = Self::default();
         #[cfg(target_arch = "x86_64")]

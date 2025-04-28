@@ -5,6 +5,8 @@ use std::io::Error;
 #[derive(Debug)]
 #[derive(Clone)]
 #[allow(dead_code)]
+/// ## CsvError
+/// - An enum, that handle the different types of error, that the library can produce.
 pub enum CsvError {
     IO(String),
     Parse(i32,i32,String),
@@ -14,6 +16,8 @@ pub enum CsvError {
 
 }
 
+/// ## Display implementation
+/// - Implement the fmt function for the trait.
 impl Display for CsvError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -36,9 +40,11 @@ impl Display for CsvError {
     }
 }
 
+/// Default implent of std:err::Error for CsvError.
 impl std::error::Error for CsvError {}
 
-//Implement of errors
+/// ## Implements io::Error for CsvError.
+/// - Allows to cast an io::Error into a CsvError
 impl From<io::Error> for CsvError {
     fn from(value: Error) -> Self {
         CsvError::IO(value.to_string())

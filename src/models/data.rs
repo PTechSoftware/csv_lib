@@ -2,7 +2,7 @@ use std::any::Any;
 
 /// ## Data Enum
 /// Holds the data of the field in the csv.
-/// Allows to handle diferents datatypes, parsing it in runtime.
+/// Allows to handle different datatypes, parsing it in runtime.
 #[derive(Debug)]
 #[allow(dead_code)]
 pub enum Data{
@@ -80,6 +80,4 @@ mod test_data{
         let d = crate::models::data::Data::Text(String::from("hello"));
         assert_eq!("hello", format!("{}", d));
     }
-    
-  
 }

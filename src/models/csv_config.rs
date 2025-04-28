@@ -3,27 +3,49 @@ use encoding_rs::{Encoding, WINDOWS_1252};
 
 #[derive(Debug,Clone)]
 #[allow(dead_code)]
+/// ## CsvConfig Struct
+///
+/// - Stores the config used to read a CSV File.
 pub struct CsvConfig {
-    /// Force fucntion to use memcachr3. is more compatible, but don't take advantage of NEON / AVX2 feature
+    /// Force function to use memchr3. is more compatible, but don't take advantage of NEON / AVX2 feature
     pub force_memcach3 : bool,
-    /// A Vec<u8> with the byte of the chars that can be considered as delimiter.
+    /// A u8 with the byte of the chars that can be considered as delimiter.
     pub delimiter: u8,
-    pub string_separators: u8,
+    /// Allow to define a string delimiter. Use `0u8` if you want to disable it
+    pub string_separator: u8,
     /// Defines the line break char
     pub line_break: u8,
     /// Defines de encoding used to open the file.
     pub encoder : &'static Encoding,
-    /// A map used to register the expected type of each column.
-    type_map: Vec<DataType>
+    /// A map used to register the expected type of each column.If you dont configure it the data parser will determinate the type in runtime.
+    pub type_map: Vec<DataType>
 }
 
 
 impl Default for CsvConfig {
+    /// ## Default for `CsvConfig`
+    /// - Implements the default construction for struct CsvConfig
+    /// ### Code Example:
+    /// ```
+    /// //Import zone
+    /// use encoding_rs::WINDOWS_1252;
+    /// use csv_lib::models::csv_config::CsvConfig;
+    ///
+    /// //Default CsvConfig construction
+    /// let a = CsvConfig{
+    ///  force_memcach3 : false,
+    ///   delimiter : b';',
+    ///   string_separator:0u8,
+    ///   line_break: b'\n',
+    ///   encoder:WINDOWS_1252,
+    ///   type_map:Vec::new()
+    /// };
+    /// ```
     fn default() -> Self {
         Self {
             force_memcach3 : false,
             delimiter : b';',
-            string_separators :0u8,
+            string_separator:0u8,
             line_break: b'\n',
             encoder:WINDOWS_1252,
             type_map:Vec::new()
@@ -34,6 +56,9 @@ impl Default for CsvConfig {
 impl CsvConfig {
 
     #[allow(dead_code)]
+    #[inline(always)]
+    /// ## New Function:
+    /// - Creates a new instance of the struct `CsvConfig`
     pub fn new(
         delimiter: u8,
         string_separators: u8,
@@ -45,15 +70,15 @@ impl CsvConfig {
         Self {
             force_memcach3,
             delimiter,
-            string_separators,
+            string_separator: string_separators,
             line_break,
             encoder,
             type_map,
         }
     }
 
-
-    /// get_data_type
+    /// ## Function Get Data Type
+    /// - Try to get the Datatype mapped by the use. If it isn't mapped returns autodetect.
     ///
     /// # Arguments
     ///
