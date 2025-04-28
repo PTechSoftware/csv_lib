@@ -46,7 +46,6 @@ mod test {
     use crate::extensions::field_extension::Datable;
     use crate::extensions::row_extension::IterableRow;
     use crate::models::csv_config::CsvConfig;
-    use crate::models::data::Data;
 
     #[test]
     fn read_csv(){
@@ -65,17 +64,16 @@ mod test {
             Err(e) => panic!("{}", e)
         };
         // Process Lines (As you can observe, you can pass differents config on each stage, to improve customization)
-        while let Some(mut raw_row) = f.next_raw() {
+        while let Some(raw_row) = f.next_raw() {
             let mut iter = raw_row.get_iterator(&cfg);
-
-            let mut row : Vec<Data> = Vec::new();
+            //This is not efficient, but for demostration works
+            let mut rr_str = String::new();
             while let Some(row) = iter.next() {
                 let data = row.get_as_data_autodetect(&cfg);
-                //You can print field, due fmt::Display is already implemented
-                print!("{}", data);
+                //You can aggregate field, due fmt::Display is already implemented
+                rr_str.push_str(&format!("{},", data));
             }
-
-
+            println!("{}", rr_str);
         }
 
     }

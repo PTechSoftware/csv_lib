@@ -74,7 +74,10 @@ impl CsvReaderWithMap {
         {
             //En x86, si soporta avx2 lo uso
             if is_x86_feature_detected!("avx2") {
-                return  self.new_raw_avx2()
+                return unsafe{ self.new_raw_avx2() }
+            }else{
+                //En x86, si no soporta avx2, uso el memcach3
+                return self.next_raw_memchr3()
             }
         }
         #[cfg(target_arch = "aarch64")]{
@@ -128,37 +131,39 @@ impl CsvReaderWithMap {
 
 
     /// ## Next Raw AVX2
-    /// Obtains the next row, in u8 not codified format, taking advantage of cpu feature AVX2.
+    /// Obtains the next row, in u8 not codified format, using CPU AVX2 instructions.
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "avx2")]
-    fn new_raw_avx2(&mut self) -> Option<&[u8]> {
-        unsafe {
-            //determine the tos end slice
-            let slice = &self.mmap[self.cursor ..];
-            //Determine the line break cursor position
-            match locate_line_break_avx2(
-                slice,
-                self.cursor,
-                self.config.line_break
-            ) {
-                0 => {
-                    //EOF, so, reset cursor
-                    self.reset_cursor();
-                    None
-                }
-                i => {
-                    //Take a reference of the map file
-                    let map =  &self.mmap[..];
-                    //Return the byte slice of a row
-                    let row = &map[self.cursor .. i];
-                    //Move the cursor position
-                    self.cursor = i;
-                    //Extract the byte line
-                    Some(row)
-                }
+    unsafe fn new_raw_avx2(&mut self) -> Option<&[u8]> {
+        let slice = &self.mmap[self.cursor..];
+
+        match unsafe{ locate_line_break_avx2(slice, self.config.line_break) } {
+            0 => {
+                self.reset_cursor();
+                None
+            }
+            sep_index => {
+                let row = &self.mmap[self.cursor..self.cursor + sep_index];
+
+                // Determine how many separator bytes to trim
+                let end = if row.ends_with(b"\r\n") {
+                    2
+                } else if row.ends_with(&[b'\n']) || row.ends_with(&[b'\r']) {
+                    1
+                } else {
+                    0
+                };
+
+                let row = &row[..row.len() - end];
+
+                self.cursor += sep_index;
+
+                Some(row)
             }
         }
     }
+
+
 
     /// ## Next Raw Memchr3
     /// Obtains the next row, in u8 not codified format.

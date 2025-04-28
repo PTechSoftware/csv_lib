@@ -26,112 +26,57 @@ pub fn locate_line_break_memchr3(slice: &[u8], cursor: usize, separator: u8) -> 
     r.unwrap_or_else(|| 0)
 }
 
-/// ## Locate Line Break AVX2
-/// AVX2 Compatible function, to find the line break.
 #[cfg(target_arch = "x86_64")]
 #[target_feature(enable = "avx2")]
-pub unsafe fn locate_line_break_avx2(slice: &[u8], cursor: usize, separator: u8) -> usize {
-    use std::arch::x86_64::*;
+pub unsafe fn locate_line_break_avx2(slice: &[u8], separator: u8) -> usize {
+    unsafe {
 
-    let len = slice.len();
-    let mut i = cursor;
+        use std::arch::x86_64::*;
 
-    // Crear patrones SIMD
-    let pat_n = _mm256_set1_epi8(b'\n' as i8);
-    let pat_r = _mm256_set1_epi8(b'\r' as i8);
-    let pat_sep = _mm256_set1_epi8(separator as i8);
+        let len = slice.len();
+        let mut i = 0;
 
-    while i + 32 <= len {
-        let chunk = _mm256_loadu_si256(slice.as_ptr().add(i) as *const __m256i);
+        let pat_n = _mm256_set1_epi8(b'\n' as i8);
+        let pat_r = _mm256_set1_epi8(b'\r' as i8);
+        let pat_sep = _mm256_set1_epi8(separator as i8);
 
-        // Comparaciones paralelas
-        let cmp_n = _mm256_cmpeq_epi8(chunk, pat_n);
-        let cmp_r = _mm256_cmpeq_epi8(chunk, pat_r);
-        let cmp_sep = _mm256_cmpeq_epi8(chunk, pat_sep);
+        while i + 32 <= len {
+            let chunk = _mm256_loadu_si256(slice.as_ptr().add(i) as *const __m256i);
 
-        // Masks
-        let mask_n = _mm256_movemask_epi8(cmp_n);
-        let mask_r = _mm256_movemask_epi8(cmp_r);
-        let mask_sep = _mm256_movemask_epi8(cmp_sep);
+            let cmp_n = _mm256_cmpeq_epi8(chunk, pat_n);
+            let cmp_r = _mm256_cmpeq_epi8(chunk, pat_r);
+            let cmp_sep = _mm256_cmpeq_epi8(chunk, pat_sep);
 
-        // Si hay algún match
-        if mask_n != 0 || mask_r != 0 || mask_sep != 0 {
-            let mut first = 32usize; // grande para ir comparando
-            let mut source = 0; // tipo de match encontrado (1: \r, 2: \n, 3: sep)
+            let mask = _mm256_movemask_epi8(cmp_n) | _mm256_movemask_epi8(cmp_r) | _mm256_movemask_epi8(cmp_sep);
 
-            // Buscar el primero entre los tres
-            if mask_r != 0 {
-                let pos_r = mask_r.trailing_zeros() as usize;
-                if pos_r < first {
-                    first = pos_r;
-                    source = 1;
-                }
-            }
+            if mask != 0 {
+                let first = mask.trailing_zeros() as usize;
+                let pos = i + first;
 
-            if mask_n != 0 {
-                let pos_n = mask_n.trailing_zeros() as usize;
-                if pos_n < first {
-                    first = pos_n;
-                    source = 2;
-                }
-            }
-
-            if mask_sep != 0 {
-                let pos_sep = mask_sep.trailing_zeros() as usize;
-                if pos_sep < first {
-                    first = pos_sep;
-                    source = 3;
-                }
-            }
-
-            match source {
-                1 => {
-                    // Encontramos \r
-                    if i + first + 1 < len && slice[i + first + 1] == b'\n' {
-                        return i + first + 2;
-                    } else {
-                        return i + first + 1;
-                    }
-                }
-                2 => {
-                    // Encontramos \n
-                    return i + first + 1;
-                }
-                3 => {
-                    // Encontramos separator
-                    return i + first + 1;
-                }
-                _ => unreachable!(),
-            }
-        }
-
-        i += 32;
-    }
-
-    // Procesar el resto byte a byte
-    while i < len {
-        match slice[i] {
-            b'\r' => {
-                if i + 1 < len && slice[i + 1] == b'\n' {
-                    return i + 2;
+                if slice[pos] == b'\r' && pos + 1 < len && slice[pos + 1] == b'\n' {
+                    return first + 2;
                 } else {
-                    return i + 1;
+                    return first + 1;
                 }
             }
-            b'\n' => {
-                return i + 1;
-            }
-            sep if sep == separator => {
-                return i + 1;
-            }
-            _ => {
-                i += 1;
+
+            i += 32;
+        }
+
+        // Manual fallback
+        while i < len {
+            match slice[i] {
+                b'\r' if i + 1 < len && slice[i + 1] == b'\n' => return i + 2,
+                b'\r' | b'\n' => return i + 1,
+                byte if byte == separator => return i + 1,
+                _ => i += 1,
             }
         }
+        0
     }
-
-    slice.len()
 }
+
+
 
 /// ## Locate Line Break NEON
 ///
