@@ -130,36 +130,36 @@ impl CsvReaderWithMap {
     }
 
 
-    /// ## Next Raw AVX2
-    /// Obtains the next row, in u8 not codified format, using CPU AVX2 instructions.
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "avx2")]
-    unsafe fn new_raw_avx2(&mut self) -> Option<&[u8]> {
-        let slice = &self.mmap[self.cursor..];
+    pub unsafe fn new_raw_avx2(&mut self) -> Option<&[u8]> {
+        unsafe {
+            let slice = &self.mmap[self.cursor..];
 
-        match unsafe{ locate_line_break_avx2(slice, self.config.line_break) } {
-            0 => {
+            let sep_index = locate_line_break_avx2(slice, self.config.line_break);
+
+            if sep_index == 0 {
                 self.reset_cursor();
-                None
+                return None;
             }
-            sep_index => {
-                let row = &self.mmap[self.cursor..self.cursor + sep_index];
 
-                // Determine how many separator bytes to trim
-                let end = if row.ends_with(b"\r\n") {
-                    2
-                } else if row.ends_with(&[b'\n']) || row.ends_with(&[b'\r']) {
-                    1
-                } else {
-                    0
-                };
+            let full_row = &self.mmap[self.cursor..self.cursor + sep_index];
 
-                let row = &row[..row.len() - end];
+            let trim_len = if full_row.ends_with(b"\r\n") {
+                2
+            } else if full_row.ends_with(&[b'\r']) || full_row.ends_with(&[b'\n']) {
+                1
+            } else {
+                0
+            };
 
-                self.cursor += sep_index;
+            let valid_len = full_row.len().saturating_sub(trim_len);
 
-                Some(row)
-            }
+            let row = &full_row[..valid_len];
+
+            self.cursor += sep_index;
+
+            Some(row)
         }
     }
 

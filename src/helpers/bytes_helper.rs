@@ -28,53 +28,74 @@ pub fn locate_line_break_memchr3(slice: &[u8], cursor: usize, separator: u8) -> 
 
 #[cfg(target_arch = "x86_64")]
 #[target_feature(enable = "avx2")]
-pub unsafe fn locate_line_break_avx2(slice: &[u8], separator: u8) -> usize {
+pub unsafe  fn locate_line_break_avx2(buffer: &[u8], separator: u8) -> usize {
     unsafe {
-
         use std::arch::x86_64::*;
 
-        let len = slice.len();
         let mut i = 0;
+        let len = buffer.len();
 
-        let pat_n = _mm256_set1_epi8(b'\n' as i8);
-        let pat_r = _mm256_set1_epi8(b'\r' as i8);
-        let pat_sep = _mm256_set1_epi8(separator as i8);
+        let pattern_n = _mm256_set1_epi8(b'\n' as i8);
+        let pattern_r = _mm256_set1_epi8(b'\r' as i8);
+        let check_separator = separator != b'\r' && separator != b'\n';
+        let pattern_sep = if check_separator {
+            Some(_mm256_set1_epi8(separator as i8))
+        } else {
+            None
+        };
 
         while i + 32 <= len {
-            let chunk = _mm256_loadu_si256(slice.as_ptr().add(i) as *const __m256i);
+            let chunk = _mm256_loadu_si256(buffer.as_ptr().add(i) as *const __m256i);
 
-            let cmp_n = _mm256_cmpeq_epi8(chunk, pat_n);
-            let cmp_r = _mm256_cmpeq_epi8(chunk, pat_r);
-            let cmp_sep = _mm256_cmpeq_epi8(chunk, pat_sep);
+            let cmp_n = _mm256_cmpeq_epi8(chunk, pattern_n);
+            let cmp_r = _mm256_cmpeq_epi8(chunk, pattern_r);
+            let cmp_sep = if let Some(pattern_sep) = pattern_sep {
+                Some(_mm256_cmpeq_epi8(chunk, pattern_sep))
+            } else {
+                None
+            };
 
-            let mask = _mm256_movemask_epi8(cmp_n) | _mm256_movemask_epi8(cmp_r) | _mm256_movemask_epi8(cmp_sep);
+            let mask_n = _mm256_movemask_epi8(cmp_n);
+            let mask_r = _mm256_movemask_epi8(cmp_r);
+            let mask_sep = cmp_sep.map_or(0, |c| _mm256_movemask_epi8(c));
 
-            if mask != 0 {
-                let first = mask.trailing_zeros() as usize;
-                let pos = i + first;
-
-                if slice[pos] == b'\r' && pos + 1 < len && slice[pos + 1] == b'\n' {
-                    return first + 2;
-                } else {
-                    return first + 1;
+            if mask_n != 0 || mask_r != 0 || mask_sep != 0 {
+                for j in 0..32 {
+                    let pos = i + j;
+                    if pos >= len {
+                        break;
+                    }
+                    match buffer[pos] {
+                        b'\r' => {
+                            if pos + 1 < len && buffer[pos + 1] == b'\n' {
+                                return pos + 2;
+                            } else {
+                                return pos + 1;
+                            }
+                        }
+                        b'\n' => return pos + 1,
+                        byte if check_separator && byte == separator => return pos + 1,
+                        _ => {}
+                    }
                 }
             }
 
             i += 32;
         }
 
-        // Manual fallback
         while i < len {
-            match slice[i] {
-                b'\r' if i + 1 < len && slice[i + 1] == b'\n' => return i + 2,
+            match buffer[i] {
+                b'\r' if i + 1 < len && buffer[i + 1] == b'\n' => return i + 2,
                 b'\r' | b'\n' => return i + 1,
-                byte if byte == separator => return i + 1,
+                byte if check_separator && byte == separator => return i + 1,
                 _ => i += 1,
             }
         }
-        0
+
+        buffer.len()
     }
 }
+
 
 
 
