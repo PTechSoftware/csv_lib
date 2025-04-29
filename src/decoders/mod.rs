@@ -1,0 +1,11 @@
+pub mod decoders;
+pub(crate) mod utf8;
+pub(crate) mod latin1;
+pub(crate) mod windows1252;
+pub(crate) mod windows1251;
+pub(crate) mod latin2;
+pub(crate) mod latin9;
+pub(crate) mod koi8r;
+pub(crate) mod shiftjis;
+pub(crate) mod gbk;
+pub(crate) mod big5;

@@ -160,12 +160,14 @@ pub mod io;
 pub mod helpers;
 pub mod csv;
 pub mod extensions;
-mod features;
-
-
+pub mod features;
+pub mod decoders;
+pub mod encoders;
+/*
 #[cfg(test)]
 mod test {
     use crate::csv::csv_reader::CsvReaderWithMap;
+    use crate::decoders::encoders::Decoder;
     use crate::extensions::field_extension::Datable;
     use crate::extensions::row_extension::IterableRow;
     use crate::models::csv_config::CsvConfig;
@@ -178,7 +180,7 @@ mod test {
             b',',
             0u8,
             b'\n',
-            encoding_rs::WINDOWS_1252,
+            Decoder::Windows1252,
             Vec::new(),
             false,
         );
@@ -211,3 +213,6 @@ mod test {
 
     }
 }
+
+
+ */

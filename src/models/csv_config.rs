@@ -1,5 +1,5 @@
 use crate::models::datatype::DataType;
-use encoding_rs::{Encoding, WINDOWS_1252};
+use crate::decoders::decoders::Decoder;
 
 #[derive(Debug,Clone)]
 #[allow(dead_code)]
@@ -16,7 +16,7 @@ pub struct CsvConfig {
     /// Defines the line break char
     pub line_break: u8,
     /// Defines de encoding used to open the file.
-    pub encoder : &'static Encoding,
+    pub decoder : Decoder,
     /// A map used to register the expected type of each column.If you dont configure it the data parser will determinate the type in runtime.
     pub type_map: Vec<DataType>
 }
@@ -37,7 +37,7 @@ impl Default for CsvConfig {
     ///   delimiter : b';',
     ///   string_separator:0u8,
     ///   line_break: b'\n',
-    ///   encoder:WINDOWS_1252,
+    ///   decoder : Decoder::Windows1252,
     ///   type_map:Vec::new()
     /// };
     /// ```
@@ -47,7 +47,7 @@ impl Default for CsvConfig {
             delimiter : b';',
             string_separator:0u8,
             line_break: b'\n',
-            encoder:WINDOWS_1252,
+            decoder : Decoder::Windows1252,
             type_map:Vec::new()
         }
     }
@@ -63,7 +63,7 @@ impl CsvConfig {
         delimiter: u8,
         string_separators: u8,
         line_break: u8,
-        encoder: &'static Encoding,
+        encoder: Decoder,
         type_map: Vec<DataType>,
         force_memcach3: bool
     ) -> Self {
@@ -72,7 +72,7 @@ impl CsvConfig {
             delimiter,
             string_separator: string_separators,
             line_break,
-            encoder,
+            decoder : Decoder::Windows1252,
             type_map,
         }
     }

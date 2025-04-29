@@ -100,7 +100,7 @@ impl CsvReaderWithMap {
     /// ## Next Raw NEON
     /// Obtains the next row, in u8 not codified format, taking advantage of cpu(aarch64) feature NEON.
     #[cfg(target_arch = "aarch64")]
-    fn new_raw_neon(&mut self) -> Option<&[u8]> {
+    pub(crate) fn new_raw_neon(&mut self) -> Option<&[u8]> {
         unsafe {
             // Obtain the unmapped slice starting from the cursor
             let slice = &self.mmap[self.cursor..];
@@ -140,7 +140,7 @@ impl CsvReaderWithMap {
 
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "avx2")]
-    pub unsafe fn new_raw_avx2(&mut self) -> Option<&[u8]> {
+    pub(crate) unsafe fn new_raw_avx2(&mut self) -> Option<&[u8]> {
         unsafe {
             let slice = &self.mmap[self.cursor..];
 
@@ -172,10 +172,9 @@ impl CsvReaderWithMap {
     }
 
 
-
     /// ## Next Raw Memchr3
     /// Obtains the next row, in u8 not codified format.
-    fn next_raw_memchr3(&mut self) -> Option<&[u8]> {
+    pub(crate) fn next_raw_memchr3(&mut self) -> Option<&[u8]> {
         //determine the tos end slice
         let slice = &self.mmap[self.cursor ..];
         //Determine the line break cursor position
@@ -205,7 +204,7 @@ impl CsvReaderWithMap {
     #[allow(dead_code)]
     /// ## Reset Cursor:
     /// Reset the cursor of the Mmap File.
-    fn reset_cursor(&mut self){
+    pub(crate) fn reset_cursor(&mut self){
         self.cursor = 0
     }
 }
