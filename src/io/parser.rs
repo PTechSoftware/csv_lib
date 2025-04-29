@@ -5,9 +5,9 @@ use crate::models::datatype::DataType;
 /// Used as fallback or when working directly with Cow<str>.
 #[inline(always)]
 pub fn parse_field(input: &str, data_type: &DataType) -> Data {
-    todo!("Fix Datatype::TextRef");
     match data_type {
         DataType::Text => Data::Text(input.to_owned()),
+        DataType::TextRef => Data::Text(input.into()),
         DataType::Byte => input.parse::<i8>().map_or(Data::Empty, Data::Byte),
         DataType::UByte => input.parse::<u8>().map_or(Data::Empty, Data::UByte),
         DataType::Short => input.parse::<i16>().map_or(Data::Empty, Data::Short),
@@ -85,17 +85,136 @@ pub fn parse_field_fast_u8(input: &[u8], data_type: &DataType) -> Data {
     }
 }
 
-/// Small helper trait to allow fallback chaining
-trait OrElse {
-    fn or_else<F: FnOnce() -> Data>(self, fallback: F) -> Data;
-}
 
-impl OrElse for Data {
-    fn or_else<F: FnOnce() -> Data>(self, fallback: F) -> Data {
-        if matches!(self, Data::Empty) {
-            fallback()
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::datatype::DataType;
+    use crate::models::data::Data;
+
+    #[test]
+    fn test_parse_text() {
+        let result = parse_field("hello", &DataType::Text);
+        assert_eq!(result.to_string(), "hello");
+    }
+    #[test]
+    fn test_parse_text_ref() {
+        let result = parse_field("hello", &DataType::TextRef);
+        assert_eq!(result.to_string(), "hello");
+    }
+    #[test]
+    fn test_parse_byte() {
+        let result = parse_field("-12", &DataType::Byte);
+        assert!(matches!(result, Data::Byte(-12)));
+    }
+
+    #[test]
+    fn test_parse_ubyte() {
+        let result = parse_field("250", &DataType::UByte);
+        assert!(matches!(result, Data::UByte(250)));
+    }
+
+    #[test]
+    fn test_parse_short() {
+        let result = parse_field("-12345", &DataType::Short);
+        assert!(matches!(result, Data::Short(-12345)));
+    }
+
+    #[test]
+    fn test_parse_ushort() {
+        let result = parse_field("54321", &DataType::UShort);
+        assert!(matches!(result, Data::UShort(54321)));
+    }
+
+    #[test]
+    fn test_parse_integer() {
+        let result = parse_field("123456", &DataType::Integer);
+        assert!(matches!(result, Data::Integer(123456)));
+    }
+
+    #[test]
+    fn test_parse_uinteger() {
+        let result = parse_field("654321", &DataType::UInteger);
+        assert!(matches!(result, Data::UInteger(654321)));
+    }
+
+    #[test]
+    fn test_parse_long() {
+        let result = parse_field("-922337203685477580", &DataType::Long);
+        assert!(matches!(result, Data::Long(-922337203685477580)));
+    }
+
+    #[test]
+    fn test_parse_ulong() {
+        let result = parse_field("1844674407370955161", &DataType::ULong);
+        assert!(matches!(result, Data::ULong(1844674407370955161)));
+    }
+
+    #[test]
+    fn test_parse_float() {
+        let result = parse_field("3.14", &DataType::Float);
+        if let Data::Float(v) = result {
+            assert!((v - 3.14).abs() < f32::EPSILON);
         } else {
-            self
+            panic!("Expected Float");
         }
+    }
+
+    #[test]
+    fn test_parse_double() {
+        let result = parse_field("2.718281828459", &DataType::Double);
+        if let Data::Double(v) = result {
+            assert!((v - 2.718281828459).abs() < f64::EPSILON);
+        } else {
+            panic!("Expected Double");
+        }
+    }
+
+    #[test]
+    fn test_parse_boolean_true() {
+        let result = parse_field("true", &DataType::Boolean);
+        assert_eq!(result.to_string(), "true");
+    }
+
+    #[test]
+    fn test_parse_boolean_false() {
+        let result = parse_field("0", &DataType::Boolean);
+        assert_eq!(result.to_string(), "false");
+    }
+
+    #[test]
+    fn test_parse_autodetect_integer() {
+        let result = parse_field("1234", &DataType::AutoDetect);
+        assert!(matches!(result, Data::Long(1234)));
+    }
+
+    #[test]
+    fn test_parse_autodetect_float() {
+        let result = parse_field("3.14", &DataType::AutoDetect);
+        assert!(matches!(result, Data::Double(_)));
+    }
+
+    #[test]
+    fn test_parse_autodetect_bool() {
+        let result = parse_field("verdadero", &DataType::AutoDetect);
+        assert_eq!(result.to_string(), "true");
+    }
+
+    #[test]
+    fn test_parse_autodetect_text() {
+        let result = parse_field("Hola mundo", &DataType::AutoDetect);
+        assert_eq!(result.to_string(), "Hola mundo");
+    }
+
+    #[test]
+    fn test_parse_empty_invalid_int() {
+        let result = parse_field("abc", &DataType::Integer);
+        assert!(matches!(result, Data::Empty));
+    }
+
+    #[test]
+    fn test_parse_empty_invalid_bool() {
+        let result = parse_field("nada", &DataType::Boolean);
+        assert!(matches!(result, Data::Empty));
     }
 }

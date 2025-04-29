@@ -1,5 +1,3 @@
-
-/*
 use crate::models::data::Data;
 use crate::models::datatype::DataType;
 use std::borrow::Cow;
@@ -86,8 +84,8 @@ where
                 }
             });
         }
-    }).expect("All threads joined successfully");
+    });
 }
 
-*/
+
  

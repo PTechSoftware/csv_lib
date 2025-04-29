@@ -18,6 +18,13 @@ All notable changes to this project will be documented in this file.
 ### Removed
 
 - Removed `encoding_rs` dependency from `Cargo.toml`.
+- Removed DataType Custom
+---
+
+### Fixed
+
+- Fixed Data::TextRef Extraction.
+
 ---
 
 ## [0.1.0] - 2025-04-28

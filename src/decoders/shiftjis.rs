@@ -6,6 +6,7 @@ use std::arch::x86_64::*;
 #[cfg(target_arch = "aarch64")]
 #[allow(unused)]
 use std::arch::aarch64::*;
+use std::arch::is_aarch64_feature_detected;
 
 /// Scalar Shift_JIS decoder (basic version).
 /// Handles ASCII and Katakana, marks others as invalid for now.
@@ -65,7 +66,7 @@ pub fn decode_shiftjis(input: &[u8]) -> Cow<'_, str> {
     }
     #[cfg(target_arch = "aarch64")]
     {
-        if std::is_aarch64_feature_detected!("neon") {
+        if is_aarch64_feature_detected!("neon") {
             return decode_shiftjis_neon(input);
         }
     }
@@ -104,7 +105,7 @@ mod tests {
             }
             #[cfg(target_arch = "aarch64")]
             {
-                if std::is_aarch64_feature_detected!("neon") {
+                if is_aarch64_feature_detected!("neon") {
                     decode_shiftjis_neon(VALID_ASCII)
                 } else {
                     decode_shiftjis_scalar(VALID_ASCII)

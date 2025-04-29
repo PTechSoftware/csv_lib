@@ -6,6 +6,7 @@ use std::arch::x86_64::*;
 #[cfg(target_arch = "aarch64")]
 #[allow(unused)]
 use std::arch::aarch64::*;
+use std::arch::is_aarch64_feature_detected;
 
 /// KOI8-R Scalar Decoder.
 
@@ -60,7 +61,7 @@ pub fn decode_koi8r(input: &[u8]) -> Cow<'_, str> {
     }
     #[cfg(target_arch = "aarch64")]
     {
-        if std::is_aarch64_feature_detected!("neon") {
+        if is_aarch64_feature_detected!("neon") {
             return decode_koi8r_neon(input);
         }
     }
@@ -99,7 +100,7 @@ mod tests {
             }
             #[cfg(target_arch = "aarch64")]
             {
-                if std::is_aarch64_feature_detected!("neon") {
+                if is_aarch64_feature_detected!("neon") {
                     decode_koi8r_neon(VALID_KOI8R)
                 } else {
                     decode_koi8r_scalar(VALID_KOI8R)

@@ -1,5 +1,3 @@
-use std::any::Any;
-
 /// ## Data Enum
 /// Holds the data of the field in the csv.
 /// Allows to handle different datatypes, parsing it in runtime.
@@ -19,7 +17,6 @@ pub enum Data{
     Float(f32),
     Double(f64),
     Boolean(bool),
-    Custom(Box<dyn Any>),//Usefull to use with chrono for example.
     Empty,
     AutoDetect(&'static str)
 }
@@ -63,8 +60,6 @@ impl std::fmt::Display for Data{
                 write!(f, "{}", v)}
             Data::Boolean(v) => {
                 write!(f, "{}", v) }
-            Data::Custom(v) => {
-                write!(f, "{:?}",v)}
             Data::Empty => {
                 write!(f, "")
             } 

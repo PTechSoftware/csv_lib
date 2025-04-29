@@ -6,6 +6,7 @@ use std::arch::x86_64::*;
 #[cfg(target_arch = "aarch64")]
 #[allow(unused)]
 use std::arch::aarch64::*;
+use std::arch::is_aarch64_feature_detected;
 
 /// Mapping table for bytes 0x80..0xFF in Windows-1251 to Unicode.
 const WINDOWS1251_TABLE: [char; 128] = [
@@ -63,7 +64,7 @@ pub fn decode_windows1251(input: &[u8]) -> Cow<'_, str> {
     }
     #[cfg(target_arch = "aarch64")]
     {
-        if std::is_aarch64_feature_detected!("neon") {
+        if is_aarch64_feature_detected!("neon") {
             return decode_windows1251_neon(input);
         }
     }
@@ -102,7 +103,7 @@ mod tests {
             }
             #[cfg(target_arch = "aarch64")]
             {
-                if std::is_aarch64_feature_detected!("neon") {
+                if is_aarch64_feature_detected!("neon") {
                     decode_windows1251_neon(VALID_WIN1251)
                 } else {
                     decode_windows1251_scalar(VALID_WIN1251)

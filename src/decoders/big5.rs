@@ -6,6 +6,7 @@ use std::arch::x86_64::*;
 #[cfg(target_arch = "aarch64")]
 #[allow(unused)]
 use std::arch::aarch64::*;
+use std::arch::is_aarch64_feature_detected;
 
 /// Scalar Big5 decoder (minimal version).
 /// Passes ASCII, replaces valid multibyte pairs with '�' for now.
@@ -60,7 +61,7 @@ pub fn decode_big5(input: &[u8]) -> Cow<'_, str> {
     }
     #[cfg(target_arch = "aarch64")]
     {
-        if std::is_aarch64_feature_detected!("neon") {
+        if is_aarch64_feature_detected!("neon") {
             return decode_big5_neon(input);
         }
     }
@@ -69,6 +70,7 @@ pub fn decode_big5(input: &[u8]) -> Cow<'_, str> {
 
 #[cfg(test)]
 mod tests {
+    use std::arch::is_aarch64_feature_detected;
     use super::*;
 
     const VALID_ASCII: &[u8] = b"Hello, Big5!";
@@ -99,7 +101,8 @@ mod tests {
             }
             #[cfg(target_arch = "aarch64")]
             {
-                if std::is_aarch64_feature_detected!("neon") {
+                
+                if is_aarch64_feature_detected!("neon") {
                     decode_big5_neon(VALID_ASCII)
                 } else {
                     decode_big5_scalar(VALID_ASCII)
