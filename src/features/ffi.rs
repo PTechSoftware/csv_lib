@@ -1,3 +1,5 @@
+/*
+
 use crate::csv::csv_reader::CsvReaderWithMap;
 use crate::models::csv_config::CsvConfig;
 use std::ffi::c_char;
@@ -126,3 +128,4 @@ pub extern "C" fn reader_next_row(reader: *mut CsvReaderWithMap, encoder: u32) -
         ptr::null_mut()
     }
 }
+*/

@@ -6,7 +6,6 @@ use std::fmt::{Display, Formatter};
 /// Holds the datatypes most commons.
 /// Allows to define the expected datatype.
 pub enum DataType {
-    TextRef,
     Text,
     Byte,
     UByte,
@@ -29,7 +28,6 @@ pub enum DataType {
 impl Display for DataType {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            DataType::TextRef => {write!(f, "TextRef")}
             DataType::Text => {write!(f, "Text")}
             DataType::Byte => {write!(f, "Byte")}
             DataType::UByte => {write!(f, "UByte")}

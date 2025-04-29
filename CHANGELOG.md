@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file.
 - Encoding support without `encoding_rs` crate. Changes `ConfigCsv` .
 - Added functions to fields in `src/extensions/field_extension.rs` to compare strings as bytes.
 - Added function to encode.
+- Added macro_rules to extract values from `Data` enum. (Added doc of available macro_rules)
+  
 
 ### Changed
 - Functions under `src/helpers/byte_helper.rs` changed access modifier to `pub(crate)`.
@@ -18,7 +20,7 @@ All notable changes to this project will be documented in this file.
 ### Removed
 
 - Removed `encoding_rs` dependency from `Cargo.toml`.
-- Removed DataType Custom
+- Removed DataTypes `Custom`, and `TextRef`
 ---
 
 ### Fixed
@@ -26,6 +28,8 @@ All notable changes to this project will be documented in this file.
 - Fixed Data::TextRef Extraction.
 
 ---
+
+
 
 ## [0.1.0] - 2025-04-28
 

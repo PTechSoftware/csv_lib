@@ -163,7 +163,8 @@ pub mod extensions;
 pub mod features;
 pub mod decoders;
 pub mod encoders;
-mod macros;
+pub mod macros;
+mod parallel;
 /*
 #[cfg(test)]
 mod test {

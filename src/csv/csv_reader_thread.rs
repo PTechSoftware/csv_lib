@@ -88,4 +88,53 @@ where
 }
 
 
- 
+ #[cfg(test)]   
+ mod tests {
+     use std::sync::{Arc, Mutex};
+     use crate::csv::csv_reader_thread::{parallel_process_csv, partition_ranges};
+     use crate::extensions::field_extension::Datable;
+     use crate::extensions::row_extension::IterableRow;
+     use crate::models::csv_config::CsvConfig;
+     use crate::models::data::Data;
+     use crate::models::datatype::DataType;
+
+     #[test]
+     fn test_partition_ranges_do_not_split_lines() {
+         let data = b"line1\nline2\nline3\nline4\nline5\n";
+         let ranges = partition_ranges(data, 3, b'\n');
+
+         for (start, end) in &ranges {
+             assert!(data[*start..*end].ends_with(b"\n") || *end == data.len());
+         }
+     }
+    /*
+     #[test]
+     fn test_parallel_csv_reader_thread() {
+         let data = b"foo\nbar\nbaz\nqux\nquux\n";
+         let results = Arc::new(Mutex::new(Vec::new()));
+
+         let mut cfg = CsvConfig::default();
+         cfg.delimiter = b';';
+         cfg.string_separator = 0u8;
+         cfg.line_break = b'\n';
+         
+         // Clone the Arc pointer to use inside each worker
+         let results_ref = Arc::clone(&results);
+         parallel_process_csv(data, b'\n', move |row| {
+             let mut iter = row.get_iterator(&cfg);
+             let f = iter.get_field_index(0).unwrap_or(&[0u8]);
+             let text = match f.get_as_data(&cfg, DataType::Text) { 
+                 Data::Text(t) => t,
+                 _ => "".to_string()
+             }; 
+             
+             results_ref.lock().unwrap().push(text.to_string());
+         });
+
+         let mut result_lines = results.lock().unwrap().clone();
+         result_lines.sort(); // For deterministic test result
+
+         assert_eq!(result_lines, vec!["bar", "baz", "foo", "quux", "qux"]);
+     }
+     */
+ }

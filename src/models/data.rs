@@ -4,7 +4,6 @@
 #[derive(Debug)]
 #[allow(dead_code)]
 pub enum Data{
-    TextRef(&'static str),
     Text(String),
     Byte(i8),
     UByte(u8),
@@ -36,8 +35,6 @@ impl std::fmt::Display for Data{
         match self {
             Data::Text(v) => {
                 write!(f, "{}", v)}   
-            Data::TextRef(v) => {
-                write!(f, "{}", v)}
             Data::Byte(v) => {
                 write!(f, "{}", v)}
             Data::UByte(v) => {

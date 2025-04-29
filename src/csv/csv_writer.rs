@@ -1,5 +1,5 @@
-/*
 use std::io::{BufWriter, Write};
+use crate::decoders::decoders::Encoding;
 
 /// A fast and configurable CSV writer with optional encoding support.
 ///
@@ -8,7 +8,7 @@ pub struct CsvWriter<W: Write> {
     writer: BufWriter<W>,
     delimiter: u8,
     line_break: &'static [u8],
-    encoder: &'static Encoding,
+    encoder: Encoding,
 }
 
 impl<W: Write> CsvWriter<W> {
@@ -19,13 +19,13 @@ impl<W: Write> CsvWriter<W> {
     /// * `inner` - The underlying writer (e.g., a File or Cursor).
     /// * `delimiter` - The byte used to separate fields (e.g., `b','`).
     /// * `line_break` - The byte sequence for line endings (e.g., `b"\n"` or `b"\r\n"`).
-    /// * `encoder` - Text encoding to use when writing string fields.
-    pub fn new(inner: W, delimiter: u8, line_break: &'static [u8], encoder: &'static Encoding) -> Self {
+    /// * `encoding` - Text encoding to use when writing string fields.
+    pub fn new(inner: W, delimiter: u8, line_break: &'static [u8], encoding: Encoding) -> Self {
         Self {
             writer: BufWriter::with_capacity(64 * 1024, inner),
             delimiter,
             line_break,
-            encoder,
+            encoder: encoding,
         }
     }
 
@@ -59,7 +59,7 @@ impl<W: Write> CsvWriter<W> {
             if i > 0 {
                 self.writer.write_all(&[self.delimiter])?;
             }
-            let (encoded, _, _) = self.encoder.encode(field);
+            let encoded = self.encoder.encode(field);
             self.writer.write_all(&encoded)?;
         }
         self.writer.write_all(self.line_break)?;
@@ -135,7 +135,7 @@ mod tests {
     #[test]
     fn test_write_row() {
         let buffer = Cursor::new(Vec::new());
-        let mut writer = CsvWriter::new(buffer, b',', b"\n", WINDOWS_1252);
+        let mut writer = CsvWriter::new(buffer, b',', b"\n", Encoding::Windows1252);
 
         let fields: Vec<&[u8]> = vec![b"hello", b"world", b"csv"];
         writer.write_row(&fields).expect("Failed to write row");
@@ -148,7 +148,7 @@ mod tests {
     #[test]
     fn test_write_row_fast() {
         let buffer = Cursor::new(Vec::new());
-        let mut writer = CsvWriter::new(buffer, b';', b"\r\n", WINDOWS_1252);
+        let mut writer = CsvWriter::new(buffer, b';', b"\r\n", Encoding::Windows1252);
 
         let fields: Vec<&str> = vec!["fast", "simple", "write"];
         writer.write_row_fast(&fields).expect("Failed to write fast row");
@@ -161,7 +161,7 @@ mod tests {
     #[test]
     fn test_write_row_simd() {
         let buffer = Cursor::new(Vec::new());
-        let mut writer = CsvWriter::new(buffer, b'\t', b"\n", WINDOWS_1252);
+        let mut writer = CsvWriter::new(buffer, b'\t', b"\n", Encoding::Windows1252);
 
         let fields: Vec<&[u8]> = vec![b"one", b"two", b"three"];
         writer.write_row_simd(&fields).expect("Failed to write simd row");
@@ -174,7 +174,7 @@ mod tests {
     #[test]
     fn test_write_empty_row() {
         let buffer = Cursor::new(Vec::new());
-        let mut writer = CsvWriter::new(buffer, b',', b"\n", WINDOWS_1252);
+        let mut writer = CsvWriter::new(buffer, b',', b"\n", Encoding::Windows1252);
 
         let fields: Vec<&[u8]> = vec![];
         writer.write_row(&fields).expect("Failed to write empty row");
@@ -184,4 +184,3 @@ mod tests {
         assert_eq!(as_utf8_str(&result), "\n");
     }
 }
-*/

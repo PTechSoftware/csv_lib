@@ -9,206 +9,135 @@ use crate::models::platform_info::PlatformInfo;
 use memmap2::Mmap;
 use std::fs::File;
 use std::path::Path;
-
-#[allow(dead_code)]
+use crate::models::row::Row;
 #[derive(Debug)]
 #[repr(C)]
 pub struct CsvReaderWithMap {
     config: CsvConfig,
-    mmap: Mmap,
-    platform : PlatformInfo,
+    mmap: Mmap, // Mmap owns the memory, no need for a lifetime
+    platform: PlatformInfo,
     cursor: usize,
 }
 
-
-
 impl CsvReaderWithMap {
-    //.......... PUBLIC ............../
-    /// Get a reference of the config
     pub fn get_config(&self) -> &CsvConfig {
         &self.config
     }
-    
-    
-    /// This Function Generates reader of a file using memmap.
-    /// Allows to open the file from a specific path .
-    /// `Usage`:
-    /// ```
-    /// use csv_lib::models::csv_config::CsvConfig;
-    /// use csv_lib::models::csv_error::CsvError;
-    /// use csv_lib::csv::csv_reader::CsvReaderWithMap;
-    ///
-    /// let cfg = CsvConfig::default();
-    /// let csv = CsvReaderWithMap::open("data.csv", &cfg);
-    /// match csv {  Ok(_) => { println!("File Ok")}Err(_) => { println!("Failed Loading")}}
-    /// ```
-    pub fn open<P: AsRef<Path>>(path: P, config: &CsvConfig) -> Result<CsvReaderWithMap, CsvError> {
-        // Try to obtain the file
-        let file = File::open(path).map_err(
-            |err|
-                CsvError::FileError(format!("Cannot open file. Detail: {}", err))
-        )?;
-        // Generate the memmap
-        let mmap = unsafe {
-            Mmap::map(&file).map_err(|bad| CsvError::FileError(format!("Cannot map file. Detail: {}", bad)))?
-        };
-        // Obtain platform info
-        let pl = PlatformInfo::new();
-        // Clone the config
-        let config = config.clone();
 
-        // Return expected CSV Reader WithMap
+    pub fn open<P: AsRef<Path>>(path: P, config: &CsvConfig) -> Result<CsvReaderWithMap, CsvError> {
+        let file = File::open(path).map_err(|err| {
+            CsvError::FileError(format!("Cannot open file. Detail: {}", err))
+        })?;
+
+        let mmap = unsafe {
+            Mmap::map(&file).map_err(|bad| {
+                CsvError::FileError(format!("Cannot map file. Detail: {}", bad))
+            })?
+        };
+
         Ok(CsvReaderWithMap {
-            config,
-            platform : pl,
+            config: config.clone(),
+            platform: PlatformInfo::new(),
             mmap,
-            cursor : 0usize,
+            cursor: 0,
         })
     }
-    
-    /// ## Next Raw Function
-    /// - Intend to get the next row slice.
-    /// - Is able to detect the EOF
-    /// - Depending on the CPU Arch, can use NEON or AVX2 Feature.
-    ///
-    /// `return` : an `Option` of `&[u8]`
-    #[allow(dead_code)]
-    pub fn next_raw(&mut self) -> Option<&[u8]> {
-        //If we move here the cfg, and target compariision, is faster. only doit once, and not on each line iter.
-        if self.config.force_memcach3 {
-            return self.next_raw_memchr3()
-        }
-        #[cfg(target_arch = "x86_64")]
-        {
-            //En x86, si soporta avx2 lo uso
-            if is_x86_feature_detected!("avx2") {
-                return unsafe{ self.new_raw_avx2() }
-            }else{
-                //En x86, si no soporta avx2, uso el memcach3
-                return self.next_raw_memchr3()
+
+    pub fn next_raw(&mut self) -> Option<Row<'_>> {
+        let lb = self.config.line_break;
+        let fm = self.config.force_memcach3;
+        let slice = if &self.config.force_memcach3 == &true {
+            self.next_raw_memchr3()
+        } else {
+            #[cfg(target_arch = "x86_64")]
+            {
+                if is_x86_feature_detected!("avx2") {
+                    unsafe { self.new_raw_avx2() }
+                } else {
+                    self.next_raw_memchr3()
+                }
             }
-        }
-        #[cfg(target_arch = "aarch64")]{
-            return  self.new_raw_neon()
-        }
+            #[cfg(target_arch = "aarch64")]
+            {
+                self.new_raw_neon()
+            }
+        }?;
+        
+        Some(Row::new(slice, lb, fm))
     }
 
-
-    //---------------------------------//
-    //.......... PRIVATE ..............//
-    //---------------------------------//
-    /// ## Next Raw NEON
-    /// Obtains the next row, in u8 not codified format, taking advantage of cpu(aarch64) feature NEON.
     #[cfg(target_arch = "aarch64")]
     pub(crate) fn new_raw_neon(&mut self) -> Option<&[u8]> {
         unsafe {
-            // Obtain the unmapped slice starting from the cursor
             let slice = &self.mmap[self.cursor..];
-            // Locate the break index
             match locate_line_break_neon(slice, self.config.line_break) {
                 0 => {
-                    // EOF, reset cursor
                     self.reset_cursor();
                     None
                 }
                 sep_index => {
-                    // Correctly extract the row WITHOUT including the separator
                     let row = &self.mmap[self.cursor..self.cursor + sep_index];
-
-                    // Now we must remove the separator bytes at the end
-                    // Check if row ends with \r\n
                     let end = if row.ends_with(b"\r\n") {
                         2
                     } else if row.ends_with(&[b'\n']) || row.ends_with(&[b'\r']) {
                         1
                     } else {
-                        0 // in case of custom separator (or no separator)
+                        0
                     };
-
-                    // Final row slice without line break or separator
                     let row = &row[..row.len() - end];
-
-                    // Move the cursor forward to after the separator
                     self.cursor += sep_index;
-
                     Some(row)
                 }
             }
         }
     }
 
-
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "avx2")]
-    pub(crate) unsafe fn new_raw_avx2(&mut self) -> Option<&[u8]> {
-        unsafe {
-            let slice = &self.mmap[self.cursor..];
+    pub(crate) unsafe fn new_raw_avx2(&mut self) -> Option<&[u8]> { unsafe {
+        let slice = &self.mmap[self.cursor..];
+        let sep_index = locate_line_break_avx2(slice, self.config.line_break);
 
-            let sep_index = locate_line_break_avx2(slice, self.config.line_break);
+        if sep_index == 0 {
+            self.reset_cursor();
+            return None;
+        }
 
-            if sep_index == 0 {
-                self.reset_cursor();
-                return None;
-            }
+        let full_row = &self.mmap[self.cursor..self.cursor + sep_index];
+        let trim_len = if full_row.ends_with(b"\r\n") {
+            2
+        } else if full_row.ends_with(&[b'\r']) || full_row.ends_with(&[b'\n']) {
+            1
+        } else {
+            0
+        };
 
-            let full_row = &self.mmap[self.cursor..self.cursor + sep_index];
-
-            let trim_len = if full_row.ends_with(b"\r\n") {
-                2
-            } else if full_row.ends_with(&[b'\r']) || full_row.ends_with(&[b'\n']) {
-                1
-            } else {
-                0
-            };
-
-            let valid_len = full_row.len().saturating_sub(trim_len);
-
-            let row = &full_row[..valid_len];
-
-            self.cursor += sep_index;
-
-            Some(row)
+        let valid_len = full_row.len().saturating_sub(trim_len);
+        let row = &full_row[..valid_len];
+        self.cursor += sep_index;
+        Some(row)
         }
     }
 
-
-    /// ## Next Raw Memchr3
-    /// Obtains the next row, in u8 not codified format.
     pub(crate) fn next_raw_memchr3(&mut self) -> Option<&[u8]> {
-        //determine the tos end slice
-        let slice = &self.mmap[self.cursor ..];
-        //Determine the line break cursor position
-        match locate_line_break_memchr3(
-            slice,
-            self.cursor,
-            self.config.line_break
-        ) {
+        let slice = &self.mmap[self.cursor..];
+        match locate_line_break_memchr3(slice, self.cursor, self.config.line_break) {
             0 => {
-                //EOF, so, reset cursor
                 self.reset_cursor();
                 None
             }
             i => {
-                //Take a reference of the map file
-                let map =  &self.mmap[..];
-                //Return the byte slice of a row
-                let row = &map[self.cursor .. i];
-                //Move the cursor position
+                let row = &self.mmap[self.cursor..i];
                 self.cursor = i;
-                //Extract the byte line
                 Some(row)
             }
         }
     }
 
-    #[allow(dead_code)]
-    /// ## Reset Cursor:
-    /// Reset the cursor of the Mmap File.
-    pub(crate) fn reset_cursor(&mut self){
-        self.cursor = 0
+    pub(crate) fn reset_cursor(&mut self) {
+        self.cursor = 0;
     }
 }
-
 
 #[cfg(test)]
 mod tests {

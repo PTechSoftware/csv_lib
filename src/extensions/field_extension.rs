@@ -10,7 +10,7 @@ use crate::models::datatype::DataType;
 /// - Adds function to logically replace chars(u8).
 /// - Adds function to check if the entire slice contains some chars. 
 /// - Adds function to get substring of slice
-pub trait Datable{
+pub(crate) trait Datable{
     /// Extracts a field as `Data` enum. must provided referenced index.
     fn get_as_data_indexed(self, cfg :&CsvConfig, index: usize) -> Data;
 
@@ -34,20 +34,20 @@ pub trait Datable{
 
 impl Datable for &[u8] {
     fn get_as_data_indexed(self, cfg: &CsvConfig, index: usize) -> Data {
-        let enc = cfg.decoder;
+        let enc = cfg.encoding;
         let (cow, _) = enc.decode_with_bom_removal(self);
         let t = cfg.get_data_type(index);
         parse_field(cow.as_ref(), t)
     }
 
     fn get_as_data_autodetect(self, cfg: &CsvConfig) -> Data {
-        let enc = cfg.decoder;
+        let enc = cfg.encoding;
         let (cow, _) = enc.decode_with_bom_removal(self);
         parse_field(cow.as_ref(), &DataType::AutoDetect)
     }
 
     fn get_as_data(self, cfg: &CsvConfig, dt: DataType) -> Data {
-        let enc = cfg.decoder;
+        let enc = cfg.encoding;
         let (cow, _) = enc.decode_with_bom_removal(self);
         parse_field(cow.as_ref(), &dt)
     }

@@ -7,7 +7,6 @@ use crate::models::datatype::DataType;
 pub fn parse_field(input: &str, data_type: &DataType) -> Data {
     match data_type {
         DataType::Text => Data::Text(input.to_owned()),
-        DataType::TextRef => Data::Text(input.into()),
         DataType::Byte => input.parse::<i8>().map_or(Data::Empty, Data::Byte),
         DataType::UByte => input.parse::<u8>().map_or(Data::Empty, Data::UByte),
         DataType::Short => input.parse::<i16>().map_or(Data::Empty, Data::Short),
@@ -97,11 +96,7 @@ mod tests {
         let result = parse_field("hello", &DataType::Text);
         assert_eq!(result.to_string(), "hello");
     }
-    #[test]
-    fn test_parse_text_ref() {
-        let result = parse_field("hello", &DataType::TextRef);
-        assert_eq!(result.to_string(), "hello");
-    }
+
     #[test]
     fn test_parse_byte() {
         let result = parse_field("-12", &DataType::Byte);

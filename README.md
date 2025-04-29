@@ -197,7 +197,6 @@ while let Some(field) = iter.next() {
 
 - Working to implent AVX512 to the lib, which can handle a larger vector. 
 This feature will be a module feature , due is not compatible with common targets, and is unstable in some Alder Laker (12th Gen Intel) processors.
-- Planned adding parallel processing
 - Planned add async feature
 
 

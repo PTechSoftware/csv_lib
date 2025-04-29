@@ -1,5 +1,5 @@
 use crate::models::datatype::DataType;
-use crate::decoders::decoders::Decoder;
+use crate::decoders::decoders::Encoding;
 
 #[derive(Debug,Clone)]
 #[allow(dead_code)]
@@ -16,7 +16,7 @@ pub struct CsvConfig {
     /// Defines the line break char
     pub line_break: u8,
     /// Defines de encoding used to open the file.
-    pub decoder : Decoder,
+    pub encoding: Encoding,
     /// A map used to register the expected type of each column.If you dont configure it the data parser will determinate the type in runtime.
     pub type_map: Vec<DataType>
 }
@@ -28,7 +28,7 @@ impl Default for CsvConfig {
     /// ### Code Example:
     /// ```
     /// //Import zone
-    /// use encoding_rs::WINDOWS_1252;
+    /// use csv_lib::decoders::decoders::Encoding;
     /// use csv_lib::models::csv_config::CsvConfig;
     ///
     /// //Default CsvConfig construction
@@ -37,7 +37,7 @@ impl Default for CsvConfig {
     ///   delimiter : b';',
     ///   string_separator:0u8,
     ///   line_break: b'\n',
-    ///   decoder : Decoder::Windows1252,
+    ///   encoding : Encoding::Windows1252,
     ///   type_map:Vec::new()
     /// };
     /// ```
@@ -47,7 +47,7 @@ impl Default for CsvConfig {
             delimiter : b';',
             string_separator:0u8,
             line_break: b'\n',
-            decoder : Decoder::Windows1252,
+            encoding: Encoding::Windows1252,
             type_map:Vec::new()
         }
     }
@@ -63,7 +63,7 @@ impl CsvConfig {
         delimiter: u8,
         string_separators: u8,
         line_break: u8,
-        encoder: Decoder,
+        encoding: Encoding,
         type_map: Vec<DataType>,
         force_memcach3: bool
     ) -> Self {
@@ -72,7 +72,7 @@ impl CsvConfig {
             delimiter,
             string_separator: string_separators,
             line_break,
-            decoder : Decoder::Windows1252,
+            encoding,
             type_map,
         }
     }

@@ -3,6 +3,7 @@ use memchr::{memchr, memchr2};
 
 /// ## Struct InRowIter
 /// - An struct, used to help int the row processing.
+#[derive(Debug)]
 pub struct InRowIter<'a> {
     line: &'a [u8],
     delimiter: u8,
@@ -10,10 +11,10 @@ pub struct InRowIter<'a> {
     cursor: usize,
 }
 
-impl<'a> InRowIter<'a> {
+impl<'mmap> InRowIter<'mmap> {
     #[inline(always)]
     /// Creates a new instance of the struct `InRowIter<'a>`
-    pub fn new(line: &'a [u8], delimiter: u8, string_separator: u8) -> Self {
+    pub fn new(line: &'mmap [u8], delimiter: u8, string_separator: u8) -> Self {
         Self {
             line,
             delimiter,
@@ -59,7 +60,7 @@ impl<'a> InRowIter<'a> {
     }
     #[inline(always)]
     /// Extract the content of a field in raw format.
-    pub fn get_field_index(&mut self, mut target: usize) -> Option<&'a [u8]> {
+    pub fn get_field_index(&mut self, mut target: usize) -> Option<&'mmap [u8]> {
         while let Some(field) = self.next() {
             if target == 0 {
                 return Some(field);
@@ -70,8 +71,8 @@ impl<'a> InRowIter<'a> {
     }
 }
 
-impl<'a> Iterator for InRowIter<'a> {
-    type Item = &'a [u8];
+impl<'mmap> Iterator for InRowIter<'mmap> {
+    type Item = &'mmap [u8];
     #[inline(always)]
     fn next(&mut self) -> Option<Self::Item> {
         if self.cursor >= self.line.len() {
