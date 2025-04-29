@@ -5,6 +5,7 @@ use crate::models::datatype::DataType;
 /// Used as fallback or when working directly with Cow<str>.
 #[inline(always)]
 pub fn parse_field(input: &str, data_type: &DataType) -> Data {
+    todo!("Fix Datatype::TextRef");
     match data_type {
         DataType::Text => Data::Text(input.to_owned()),
         DataType::Byte => input.parse::<i8>().map_or(Data::Empty, Data::Byte),
