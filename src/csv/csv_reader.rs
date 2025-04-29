@@ -44,7 +44,8 @@ impl CsvReaderWithMap {
     }
 
     pub fn next_raw(&mut self) -> Option<Row<'_>> {
-        let lb = self.config.line_break;
+        let linebreak = self.config.line_break;
+        let delimiter = self.config.delimiter;
         let fm = self.config.force_memcach3;
         let slice = if &self.config.force_memcach3 == &true {
             self.next_raw_memchr3()
@@ -63,7 +64,7 @@ impl CsvReaderWithMap {
             }
         }?;
         
-        Some(Row::new(slice, lb, fm))
+        Some(Row::new(slice, linebreak, delimiter, fm))
     }
 
     #[cfg(target_arch = "aarch64")]
@@ -174,6 +175,7 @@ mod tests {
                 let mut ctr = 0 ;
                 let t = Instant::now();
                 while let Some(_row) = ok.next_raw() {
+                    
                     ctr = ctr + 1;
                 }
                 println!("Finished after {} milisecs,  and  {} iterations",t.elapsed().as_millis(), ctr);

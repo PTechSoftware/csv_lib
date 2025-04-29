@@ -1,38 +1,57 @@
-use crate::helpers::bytes_helper::{locate_line_break_avx2, locate_line_break_memchr3};
+use crate::helpers::bytes_helper::locate_line_break_memchr3;
 use crate::models::field::Field;
+#[cfg(target_arch = "x86_64")]
+use crate::helpers::bytes_helper::locate_line_break_avx2;
+use crate::models::in_row_iter::InRowIter;
 
 #[derive(Debug)]
 #[allow(dead_code)]
 pub struct Row<'mmap>{
     slice: &'mmap[u8],
     cursor: usize,
-    delimiter: u8,
-    force_mem_cacher: bool
+    linebreak: u8,
+    force_mem_cacher: bool,
+    iter : InRowIter<'mmap>,
 }
 
 impl<'mmap> Row<'mmap> {
+    /// ## Constructor
+    /// - Make a new instance of `Row` struct.
     pub fn new(
         slice: &'mmap [u8],
-        delimiter: u8,
+        linebreak: u8,
+        field_separator: u8,
         force_mem_cacher: bool,
     ) -> Self {
+        let i = InRowIter::new(slice, linebreak, field_separator);
         Self {
             slice,
             cursor: 0,
-            delimiter,
+            linebreak,
             force_mem_cacher,
+            iter : i,
         }
+    }
+    
+    /// ## Get Slice of &[[u8]] bytes
+    /// - Gets a reference of the bytes inside row.
+    /// #### `returns` : &'mmap [[u8]]
+    pub fn get_slice(&self) -> &'mmap [u8] {
+        &self.slice
     }
 
     #[allow(dead_code)]
-    /// ## Next Function
+    /// ## Next Field
     /// - Finds the next slice between current position and delimiter
+    /// - Pack this slice, inside a Field struct in order to access field functions.
+    /// - Can iter between differents Fields, in order.
+    /// #### `returns` : An Option<Field<'mmap>>
     pub fn next_field(&mut self) -> Option<Field<'mmap>> {
         //If we move here the cfg, and target compariision, is faster. only doit once, and not on each line iter.
         if self.force_mem_cacher {
-            match self.next_raw_memchr3(){
-                Some(row) => return Some(Field::new(row)),
-                None =>return None
+            return match self.next_raw_memchr3() {
+                Some(row) => Some(Field::new(row)),
+                None => None
             }
         }
         #[cfg(target_arch = "x86_64")]
@@ -52,15 +71,24 @@ impl<'mmap> Row<'mmap> {
             }
         }
         #[cfg(target_arch = "aarch64")]{
-            match self.new_raw_neon(){
+             match self.new_raw_neon(){
                 Some(row) => Some(Field::new(row)),
                 None => None
             }
         }
     }
 
-
-
+    #[allow(dead_code)]
+    /// # Get Field by Index
+    /// - Receives an usize (zero based index), and returns the field associated to the iteration.
+    /// #### `returns`: An Option<Field<'mmap>>
+    pub fn get_index(&mut self, index: usize) -> Option<Field<'mmap>> {
+        match &self.iter.get_field_index(index) {
+            Some(field) => Some(Field::new(field)),
+            None => None
+        }
+    }
+    
     //------------------------------------------------------------//
     //--------------------- PRIVATE ------------------------------//
     //------------------------------------------------------------//
@@ -70,7 +98,7 @@ impl<'mmap> Row<'mmap> {
             // Obtain the unmapped slice starting from the cursor
             let slice = &self.slice[self.cursor..];
             // Locate the break index
-            match crate::helpers::bytes_helper::locate_line_break_neon(slice, self.delimiter) {
+            match crate::helpers::bytes_helper::locate_line_break_neon(slice, self.linebreak) {
                 0 => {
                     // EOF, reset cursor
                     self.reset_cursor();
@@ -107,7 +135,7 @@ impl<'mmap> Row<'mmap> {
         unsafe {
             let slice = &self.slice[self.cursor..];
 
-            let sep_index = locate_line_break_avx2(slice, self.delimiter);
+            let sep_index = locate_line_break_avx2(slice, self.linebreak);
 
             if sep_index == 0 {
                 self.reset_cursor();
@@ -141,7 +169,7 @@ impl<'mmap> Row<'mmap> {
         match locate_line_break_memchr3(
             slice,
             self.cursor,
-            self.delimiter
+            self.linebreak
         ) {
             0 => {
                 //EOF, so, reset cursor
