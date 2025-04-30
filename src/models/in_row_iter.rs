@@ -1,12 +1,11 @@
 use memchr::{memchr, memchr2};
 
-
 /// ## Struct InRowIter
 /// - An struct, used to help int the row processing.
 #[derive(Debug)]
 pub struct InRowIter<'a> {
     line: &'a [u8],
-    delimiter: u8,
+    field_separator: u8,
     string_separator: u8,
     cursor: usize,
 }
@@ -14,10 +13,10 @@ pub struct InRowIter<'a> {
 impl<'mmap> InRowIter<'mmap> {
     #[inline(always)]
     /// Creates a new instance of the struct `InRowIter<'a>`
-    pub fn new(line: &'mmap [u8], delimiter: u8, string_separator: u8) -> Self {
+    pub fn new(line: &'mmap [u8], field_separator: u8, string_separator: u8) -> Self {
         Self {
             line,
-            delimiter,
+            field_separator,
             string_separator,
             cursor: 0,
         }
@@ -61,10 +60,12 @@ impl<'mmap> InRowIter<'mmap> {
     #[inline(always)]
     /// Extract the content of a field in raw format.
     pub fn get_field_index(&mut self, target: usize) -> Option<&'mmap [u8]> {
-        for (idx, el ) in self.enumerate(){
-            if idx == target {
+        let mut count = 0;
+        while let Some(el) = self.next(){
+            if count == target {
                 return Some(el);
             }
+            count = count + 1;
         }
         None
     }
@@ -115,7 +116,7 @@ impl<'mmap> Iterator for InRowIter<'mmap> {
                 }
             }
 
-            if byte == self.delimiter && !in_string {
+            if byte == self.field_separator && !in_string {
                 let field = &slice[start_offset..pos - end_offset];
                 self.cursor += pos + 1;
                 return Some(field);
@@ -143,13 +144,13 @@ mod tests {
     fn test_iter_next(){
 
         let csv_data = b"uno;dos;3;cuatro;cinco;6;siete;ocho;9";
-        let row = InRowIter::new(csv_data, b';', 0u8);
+        let mut row = InRowIter::new(csv_data, b';', 0u8);
 
-        
-        for (i, f) in row.enumerate(){
-            let dec = Windows1252.decode(f);
-            println!("Field: {} Data: {}", i, dec.as_ref());
-        }
+  
+        let f = row.get_field_index(2).unwrap();
+
+        let dec = Windows1252.decode(f);
+        println!("Field Data: {}",  dec.as_ref());
         
         
     }

@@ -9,7 +9,7 @@ use crate::models::in_row_iter::InRowIter;
 pub struct Row<'mmap>{
     slice: &'mmap[u8],
     cursor: usize,
-    linebreak: u8,
+    field_separator: u8,
     force_mem_cacher: bool,
     iter : InRowIter<'mmap>,
 }
@@ -19,15 +19,15 @@ impl<'mmap> Row<'mmap> {
     /// - Make a new instance of `Row` struct.
     pub fn new(
         slice: &'mmap [u8],
-        linebreak: u8,
         field_separator: u8,
+        string_delimiter: u8,
         force_mem_cacher: bool,
     ) -> Self {
-        let i = InRowIter::new(slice, linebreak, field_separator);
+        let i = InRowIter::new(slice, field_separator, string_delimiter);
         Self {
             slice,
             cursor: 0,
-            linebreak,
+            field_separator,
             force_mem_cacher,
             iter : i,
         }
@@ -83,8 +83,9 @@ impl<'mmap> Row<'mmap> {
     /// - Receives an usize (zero based index), and returns the field associated to the iteration.
     /// #### `returns`: An Option<Field<'mmap>>
     pub fn get_index(&mut self, index: usize) -> Option<Field<'mmap>> {
-        match &self.iter.get_field_index(index) {
-            Some(field) => Some(Field::new(field)),
+        let data = &self.iter.get_field_index(index);
+        match data {
+            Some(f) => Some(Field::new(f)),
             None => None
         }
     }
@@ -98,7 +99,7 @@ impl<'mmap> Row<'mmap> {
             // Obtain the unmapped slice starting from the cursor
             let slice = &self.slice[self.cursor..];
             // Locate the break index
-            match crate::helpers::bytes_helper::locate_line_break_neon(slice, self.linebreak) {
+            match crate::helpers::bytes_helper::locate_line_break_neon(slice, self.field_separator) {
                 0 => {
                     // EOF, reset cursor
                     self.reset_cursor();
@@ -135,7 +136,7 @@ impl<'mmap> Row<'mmap> {
         unsafe {
             let slice = &self.slice[self.cursor..];
 
-            let sep_index = locate_line_break_avx2(slice, self.linebreak);
+            let sep_index = locate_line_break_avx2(slice, self.field_separator);
 
             if sep_index == 0 {
                 self.reset_cursor();
@@ -169,7 +170,7 @@ impl<'mmap> Row<'mmap> {
         match locate_line_break_memchr3(
             slice,
             self.cursor,
-            self.linebreak
+            self.field_separator
         ) {
             0 => {
                 //EOF, so, reset cursor

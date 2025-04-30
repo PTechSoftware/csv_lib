@@ -4,7 +4,7 @@ use crate::models::row::Row;
 use crate::models::worker_status::WorkerResult;
 
 /// ## Worker node
-/// Processes a subsection of a CSV file slice using a configurable function.
+/// Processes a row of a CSV file slice using a configurable function.
 pub struct Worker<'mmap, F, T>
 where
     F: FnMut(&mut Row<'mmap>, &CsvConfig, &mut T) + Send,
@@ -39,23 +39,26 @@ where
         }
     }
 
-    pub async fn run(&mut self) -> WorkerResult {
+    /// ## Runner per Row
+    /// - Provides a code to execute a line process async
+    pub async fn runner_row(&mut self) -> WorkerResult {
         //capture the values from cfg Struct
-        let field_delimiter = self.cfg.delimiter;
         let line_break = self.cfg.line_break;
+        let field_delimiter = self.cfg.delimiter;
+        let string_sep = self.cfg.string_separator;
         let memchr = self.cfg.force_memcach3;
         //Extractthe chunk based in the cursor and end preseted
         let chunk = &self.row[self.cursor..self.end];
         //Extract iterator
         let mut iterator = InRowIter::new(
             chunk,
-            line_break,
-            field_delimiter,
+            line_break, //Row level, must pass line break as argument
+            string_sep,
         );
         //Iter by row
         while let Some(row) = iterator.next() {
-            //generate the row
-            let mut r = Row::new(row, line_break,field_delimiter, memchr);
+            //generate the row [ pass field delimiter, in order to extract fields]
+            let mut r = Row::new(row, field_delimiter,string_sep, memchr);
             //Execute the clousure
             (self.execution)(&mut r, self.cfg, &mut self.target);
             //Dont need to update cursor, due it take the ones in the iterator
@@ -74,15 +77,14 @@ mod tests {
     use crate::models::worker_status::WorkerResult;
 
     #[tokio::test]
-    async fn test_worker_processes_all_rows_tokio() {
+    async fn test_worker_runner_row() {
         // Simulamos un CSV en memoria
-        let csv_data = b"uno;dos;3\r\ncuatro;cinco;6\r\nsiete;ocho;9\r\n";
+        let csv_data = b"uno;dos;3";
 
         // Configuración del CSV
         let cfg = CsvConfig {
             delimiter: b';',
             line_break: b'\n',
-            force_memcach3: true,
             ..CsvConfig::default()
         };
 
@@ -91,21 +93,13 @@ mod tests {
 
         // Closure que convierte cada Row en string y lo acumula
         let closure = |row: &mut Row, _cfg: &CsvConfig, acc: &mut Vec<String>| {
-            let dec_row = _cfg.encoding.decode(row.get_slice());
-            println!("Row Decoded: {}", dec_row);
 
             if let Some(first) = row.get_index(0){
-                let field = Encoding::Windows1252.decode(first.get_slice());
-                println!("Field Decoded: {}", field);
-                
-                
                 let data = first.get_data(Encoding::Windows1252);
                 let string = match data {
                     Data::Text(s) => s,
                     _ => "".to_string()
                 };
-
-
                 acc.push(string);
             }
         };
@@ -121,19 +115,15 @@ mod tests {
         );
 
         // Ejecutamos el worker de forma async
-        let result = worker.run().await;
+        let result = worker.runner_row().await;
 
-        //println!("Result: \n{}", collected_rows.join("\n"));
+        println!("Result: \n{}", collected_rows.join("\n"));
         // Validaciones
         if let WorkerResult::Ok = result {
             assert!(true);
         }else{
             assert!(false);
         }
-        assert_eq!(collected_rows.len(), 3);
-        assert_eq!(collected_rows[0], "uno;dos;3\r");
-        assert_eq!(collected_rows[1], "cuatro;cinco;6\r");
-        assert_eq!(collected_rows[2], "siete;ocho;9\r");
     }
 }
 

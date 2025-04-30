@@ -6,6 +6,7 @@ use std::arch::x86_64::*;
 #[cfg(target_arch = "aarch64")]
 #[allow(unused)]
 use std::arch::aarch64::*;
+#[cfg(target_arch = "aarch64")]
 use std::arch::is_aarch64_feature_detected;
 
 /// Latin9 (ISO-8859-15) Scalar Decoder.
