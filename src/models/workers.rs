@@ -8,7 +8,7 @@ use crate::models::worker_status::WorkerResult;
 /// Processes a row of a CSV file slice using a configurable function.
 pub struct Worker<'mmap, F, T>
 where
-    F: FnMut(&mut Row<'mmap>, &CsvConfig, &mut T) + Send + Clone,
+    F: FnMut(&mut Row<'mmap>, &CsvConfig, &mut Arc<Mutex<T>>) + Send + Clone,
 {
     row: &'mmap [u8],
     cursor: usize,
@@ -20,7 +20,7 @@ where
 
 impl<'mmap, F, T> Worker<'mmap, F, T>
 where
-    F: FnMut(&mut Row<'mmap>, &CsvConfig, &mut T) + Send + Clone,
+    F: FnMut(&mut Row<'mmap>, &CsvConfig, &mut Arc<Mutex<T>>) + Send + Clone,
 {
     /// ## Constructor
     /// - Creates a new instance of the worker
@@ -63,7 +63,7 @@ where
             //generate the row [ pass field delimiter, in order to extract fields]
             let mut r = Row::new(row, field_delimiter,string_sep, memchr);
             //Execute the clousure
-            (self.execution)(&mut r, self.cfg, &mut self.target.lock().unwrap());
+            (self.execution)(&mut r, self.cfg, &mut self.target);
             //Dont need to update cursor, due it take the ones in the iterator
         }
         WorkerResult::Ok
@@ -96,7 +96,7 @@ mod tests {
         let mut collected_rows = Arc::new(vec);
 
         // Closure que convierte cada Row en string y lo acumula
-        let closure = |row: &mut Row, _cfg: &CsvConfig, acc: &mut Vec<String>| {
+        let closure = |row: &mut Row, _cfg: &CsvConfig, acc: &mut Arc<Mutex<Vec<String>>>| {
 
             if let Some(first) = row.get_index(0){
                 let data = first.get_data(Encoding::Windows1252);
@@ -104,7 +104,9 @@ mod tests {
                     Data::Text(s) => s,
                     _ => "".to_string()
                 };
-                acc.push(string);
+                //Lock after process, or 
+                let mut mutex = acc.lock().unwrap();
+                mutex.push(string);
             }
         };
 

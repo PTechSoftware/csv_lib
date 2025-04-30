@@ -22,6 +22,19 @@ impl<'mmap> InRowIter<'mmap> {
         }
     }
     #[inline(always)]
+    /// ## Inner library Cursor Setter
+    /// - Set a new value for the cursor.
+    pub(crate) fn set_cursor(&mut self, new_index :usize){
+        self.cursor = new_index;
+    }
+    
+    #[inline(always)]
+    /// ## Inner library Cursor Getter
+    /// - Gets the current value of the cursor
+    pub(crate) fn get_cursor(&self) -> usize { self.cursor }
+    
+    
+    #[inline(always)]
     /// Count the number of fields, that a line haves.
     pub fn count_fields(&self, delimiter: u8, string_separator: u8) -> usize {
         let mut count = 0;

@@ -36,9 +36,9 @@ ffi = []
 [dependencies]
 memchr = "2.7.4"
 memmap2 = "0.9.5"
-futures = "0.3.31"
 tokio = "1.44.2"
 crossbeam = "0.8.4"
+futures = "0.3.31"
 
 
 [dev-dependencies]

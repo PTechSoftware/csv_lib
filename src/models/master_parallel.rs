@@ -1,16 +1,20 @@
 use std::sync::{Arc, Mutex};
 use crate::models::csv_config::CsvConfig;
+use crate::models::in_row_iter::InRowIter;
 use crate::models::row::Row;
 use crate::models::worker_status::WorkerResult;
 use crate::models::workers::Worker;
 
+
+/// ## MasterParallel struct
+/// - Handler the distribution of the workload.
 pub struct MasterParallel<'mmap, F, T>
 where
-    F: FnMut(&mut Row<'mmap>, &CsvConfig, &mut T) + Send + Clone + 'mmap,
+    F: FnMut(&mut Row<'mmap>, &CsvConfig, &mut Arc<Mutex<T>>) + Send + Clone + 'mmap,
     T: Send + 'mmap,
 {
     execution : F,
-    target : &'mmap mut Mutex<T>,
+    target : &'mmap mut Arc<Mutex<T>>,
     file: &'mmap [u8],
     cfg: &'mmap CsvConfig
 
@@ -19,7 +23,7 @@ where
 
 impl<'mmap, F, T> MasterParallel<'mmap, F, T>
 where
-    F: FnMut(&mut Row<'mmap>, &CsvConfig, &mut T) + Send+ Clone + 'mmap,
+    F: FnMut(&mut Row<'mmap>, &CsvConfig, &mut Arc<Mutex<T>>) + Send+ Clone + 'mmap,
     T: Send + 'mmap,
 {
 
@@ -34,7 +38,7 @@ where
         file: &'mmap [u8],
         cfg: &'mmap CsvConfig,
         execution: F,
-        target: &'mmap mut Mutex<T>,
+        target: &'mmap mut Arc<Mutex<T>>,
 
     ) -> Self {
         Self {
@@ -66,74 +70,77 @@ where
             0,
             self.file.len(),
             closure,
-            self.target,
+            self.target.clone(),
         );
         w.runner_row().await
     }
 
+
+    /// ## Parallel by line [[MultiThread]]
+    /// - Splits the slice, and allow to process part of the file in each worker.
+    /// - Never copy the file, each worker take a chunk of the slice to process.Each slice is a complete row.
+    /// - Try to equiparate the load between threads
     pub fn run_parallel_by_lines(&mut self) -> WorkerResult
     where
         T: Send,
         F: FnMut(&mut Row<'mmap>, &CsvConfig, &mut T) + Send + Clone,
     {
         use crossbeam::thread;
+        use std::cmp::min;
 
         let num_threads = Self::get_cores();
         let line_break = self.cfg.line_break;
+        let string_scape = self.cfg.string_separator;
         let file = self.file;
         let cfg = self.cfg;
         let total_len = file.len();
-        let mut line_indices = vec![0];
 
-        // Encontrar los offsets de cada línea [cambiar] 
-        for (i, b) in file.iter().enumerate() {
-            if *b == line_break {
-                line_indices.push(i + 1);
+        if total_len == 0 {
+            return WorkerResult::Ok;
+        }
+
+        // 1. Calcular posiciones de corte por núcleos
+        let average = total_len / num_threads;
+        let mut positions = vec![0; num_threads + 1];
+        positions[0] = 0;
+
+        let mut iterator = InRowIter::new(file, line_break, string_scape);
+        iterator.set_cursor(average);
+
+        for i in 1..=num_threads {
+            if let Some(_) = iterator.next() {
+                let current_cursor = iterator.get_cursor();
+                positions[i] = min(current_cursor, total_len);
+                iterator.set_cursor(positions[i] + average);
+            } else {
+                positions[i] = total_len;
             }
         }
 
-        // Dividir líneas de forma equitativa
-        let chunk_size = (line_indices.len() + num_threads - 1) / num_threads;
-        let chunks: Vec<_> = line_indices
-            .chunks(chunk_size)
-            .filter_map(|chunk| {
-                if let (Some(&start), Some(&end)) = (chunk.first(), chunk.last()) {
-                    Some((start, end))
-                } else {
-                    None
-                }
-            })
-            .collect();
-
-        
-        // Paralelizar
+        // 2. Ejecutar en paralelo cada chunk
         let result = thread::scope(|s| {
-            for (start, end) in chunks {
+            for i in 0..num_threads {
+                let start = positions[i];
+                let end = positions[i + 1];
+                if start >= end {
+                    continue;
+                }
+
                 let slice = &file[start..end];
-                let mut closure = self.execution.clone();
+                let closure = self.execution.clone();
                 let cfg = cfg;
-                let target = Arc::new(self.target);
+                let target = Arc::clone(&self.target);
 
                 s.spawn(move |_| {
                     let mut worker = Worker::new(slice, cfg, 0, slice.len(), closure, target);
-                    let _ = worker.runner_row(); // ignoramos errores por ahora
+                    let _ = futures::executor::block_on(worker.runner_row());
                 });
             }
-        }).map_err(|_| WorkerResult::Err("".to_string()));
-        
+        }).map_err(|e| WorkerResult::Err(format!("Thread error: {:?}", e)));
+
         match result {
-            Ok(_) => {
-                WorkerResult::Ok
-            }
-            Err(er) => {
-                er
-            }
+            Ok(_) => WorkerResult::Ok,
+            Err(e) => e,
         }
     }
-
-
-
-
-
-
 }
