@@ -21,11 +21,16 @@ impl MasterParallel {
     /// ## Runner
     ///
     /// - Processes assigned lines with the provided closure.
-    pub async fn run(_reader: &CsvReaderWithMap) -> WorkerResult {
+    pub async fn run_parallel(
+        _reader: &CsvReaderWithMap
+    ) -> WorkerResult {
         // Get the number of available cores
         let _cores = Self::get_cores();
+        // Creates a worker per thread 
         
         
         WorkerResult::Ok
     }
+    
+    
 }

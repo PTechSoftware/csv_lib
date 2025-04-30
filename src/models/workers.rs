@@ -21,6 +21,8 @@ impl<'mmap, F, T> Worker<'mmap, F, T>
 where
     F: FnMut(&mut Row<'mmap>, &CsvConfig, &mut T) + Send,
 {
+    /// ## Constructor
+    /// - Creates a new instance of the worker
     pub fn new(
         row: &'mmap [u8],
         cfg: &'mmap CsvConfig,
