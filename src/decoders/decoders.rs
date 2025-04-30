@@ -86,14 +86,14 @@ impl Encoding {
             bom_removed = true;
         }
 
-        let mut decoded = self.decode(sliced_input);
+        let decoded = self.decode(sliced_input);
 
         if !bom_removed && decoded.starts_with('\u{FEFF}') {
-            match decoded {
-                Cow::Borrowed(s) => return (Cow::Borrowed(&s[1..]), true),
+            return match decoded {
+                Cow::Borrowed(s) => (Cow::Borrowed(&s[1..]), true),
                 Cow::Owned(mut s) => {
                     s.remove(0);
-                    return (Cow::Owned(s), true);
+                    (Cow::Owned(s), true)
                 }
             }
         }

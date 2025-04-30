@@ -1,6 +1,5 @@
 use crate::decoders::decoders::Encoding;
 use crate::io::parser::parse_field;
-use crate::models::csv_config::CsvConfig;
 use crate::models::data::Data;
 use crate::models::datatype::DataType;
 

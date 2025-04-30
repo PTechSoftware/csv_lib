@@ -48,9 +48,11 @@ impl <'mmap> Field<'mmap>{
     /// ## Contains Chars
     /// Checks if the decoded text inside field, contains param input.
     pub fn contains_chars(&self, input: &str, encoding: Encoding) -> bool {
+        //extract row bytes
         let decoded = encoding.decode(self.slice);
-        let entrada = &decoded.as_ref();
-        decoded.contains(input)
+        //get base
+        let base = &decoded.as_ref();
+        base.contains(input)
     }
 
     /// ## Substring
