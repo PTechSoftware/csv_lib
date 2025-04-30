@@ -5,12 +5,13 @@ pub struct MasterParallel {}
 
 
 impl MasterParallel {
+    /*
     /// ## Constructor
     /// - Creates a new master instance.
     pub fn new() -> Self {
         Self {}
     }
-    
+    */
     /// Get available number of cores
     fn get_cores() -> usize {
         std::thread::available_parallelism()
@@ -26,11 +27,11 @@ impl MasterParallel {
     ) -> WorkerResult {
         // Get the number of available cores
         let _cores = Self::get_cores();
-        // Creates a worker per thread 
+        // Creates a worker per thread
         
         
         WorkerResult::Ok
     }
-    
-    
+
+
 }
