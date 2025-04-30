@@ -1,3 +1,4 @@
+use std::sync::{Arc, Mutex};
 use crate::models::csv_config::CsvConfig;
 use crate::models::in_row_iter::InRowIter;
 use crate::models::row::Row;
@@ -7,19 +8,19 @@ use crate::models::worker_status::WorkerResult;
 /// Processes a row of a CSV file slice using a configurable function.
 pub struct Worker<'mmap, F, T>
 where
-    F: FnMut(&mut Row<'mmap>, &CsvConfig, &mut T) + Send,
+    F: FnMut(&mut Row<'mmap>, &CsvConfig, &mut T) + Send + Clone,
 {
     row: &'mmap [u8],
     cursor: usize,
     end: usize,
     cfg: &'mmap CsvConfig,
     execution: F,
-    target: &'mmap mut T,
+    target: Arc<Mutex<T>>,
 }
 
 impl<'mmap, F, T> Worker<'mmap, F, T>
 where
-    F: FnMut(&mut Row<'mmap>, &CsvConfig, &mut T) + Send,
+    F: FnMut(&mut Row<'mmap>, &CsvConfig, &mut T) + Send + Clone,
 {
     /// ## Constructor
     /// - Creates a new instance of the worker
@@ -29,7 +30,7 @@ where
         cursor: usize,
         end: usize,
         execution: F,
-        target: &'mmap mut T,
+        target: Arc<Mutex<T>>,
     ) -> Self {
         Self {
             row,
@@ -62,7 +63,7 @@ where
             //generate the row [ pass field delimiter, in order to extract fields]
             let mut r = Row::new(row, field_delimiter,string_sep, memchr);
             //Execute the clousure
-            (self.execution)(&mut r, self.cfg, &mut self.target);
+            (self.execution)(&mut r, self.cfg, &mut self.target.lock().unwrap());
             //Dont need to update cursor, due it take the ones in the iterator
         }
         WorkerResult::Ok
@@ -91,7 +92,8 @@ mod tests {
         };
 
         // Acumulador mutable
-        let mut collected_rows = Vec::new();
+        let vec =Mutex::new(Vec::<String>::with_capacity(15));
+        let mut collected_rows = Arc::new(vec);
 
         // Closure que convierte cada Row en string y lo acumula
         let closure = |row: &mut Row, _cfg: &CsvConfig, acc: &mut Vec<String>| {
@@ -113,13 +115,12 @@ mod tests {
             0,
             csv_data.len(),
             closure,
-            &mut collected_rows,
+            Arc::clone(&collected_rows),
         );
 
         // Ejecutamos el worker de forma async
         let result = worker.runner_row().await;
-
-        println!("Result: \n{}", collected_rows.join("\n"));
+        println!("Result: \n{}", collected_rows.lock().unwrap().join("\n"));
         // Validaciones
         if let WorkerResult::Ok = result {
             assert!(true);
