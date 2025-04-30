@@ -75,6 +75,7 @@ impl<'mmap> Iterator for InRowIter<'mmap> {
     type Item = &'mmap [u8];
     #[inline(always)]
     fn next(&mut self) -> Option<Self::Item> {
+        /// ESTO ESTA MAL 
         if self.cursor >= self.line.len() {
             return None;
         }

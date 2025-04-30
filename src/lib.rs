@@ -32,55 +32,7 @@
 //! Then copy the library to your project, the one you do in other language.
 //! 
 //! To connect, or program the definitions of functions, the FFI module usefully, so i add it here:
-//! ```rust
-//! use crate::csv::csv_reader::CsvReaderWithMap;
-//! use crate::models::csv_config::CsvConfig;
-//! use std::ffi::c_char;
-//! use std::ptr;
-//! use encoding_rs::Encoding;
-//!
-//! /// Resolves a code page number to an Encoding.
-//! fn encode_solver(codepage: u32) -> &'static Encoding {
-//!     match codepage {
-//!         932 => encoding_rs::SHIFT_JIS,
-//!         936 => encoding_rs::GBK,
-//!         949 => encoding_rs::EUC_KR,
-//!         950 => encoding_rs::BIG5,
-//!         866 => encoding_rs::IBM866,
-//!         874 => encoding_rs::WINDOWS_874,
-//!         1200 => encoding_rs::UTF_16LE,
-//!         1201 => encoding_rs::UTF_16BE,
-//!         1250 => encoding_rs::WINDOWS_1250,
-//!         1251 => encoding_rs::WINDOWS_1251,
-//!         1252 => encoding_rs::WINDOWS_1252,
-//!         1253 => encoding_rs::WINDOWS_1253,
-//!         1254 => encoding_rs::WINDOWS_1254,
-//!         1255 => encoding_rs::WINDOWS_1255,
-//!         1256 => encoding_rs::WINDOWS_1256,
-//!         1257 => encoding_rs::WINDOWS_1257,
-//!         1258 => encoding_rs::WINDOWS_1258,
-//!         10000 => encoding_rs::MACINTOSH,
-//!         10017 => encoding_rs::X_MAC_CYRILLIC,
-//!         20866 => encoding_rs::KOI8_R,
-//!         20932 => encoding_rs::EUC_JP,
-//!         21866 => encoding_rs::KOI8_U,
-//!         28592 => encoding_rs::ISO_8859_2,
-//!         28593 => encoding_rs::ISO_8859_3,
-//!         28594 => encoding_rs::ISO_8859_4,
-//!         28595 => encoding_rs::ISO_8859_5,
-//!         28596 => encoding_rs::ISO_8859_6,
-//!         28597 => encoding_rs::ISO_8859_7,
-//!         28598 => encoding_rs::ISO_8859_8,
-//!         28603 => encoding_rs::ISO_8859_13,
-//!         28605 => encoding_rs::ISO_8859_15,
-//!         38598 => encoding_rs::ISO_8859_8_I,
-//!         50220 => encoding_rs::ISO_2022_JP,
-//!         54936 => encoding_rs::GB18030,
-//!         65001 => encoding_rs::UTF_8,
-//!         _ => encoding_rs::WINDOWS_1252,
-//!     }
-//! }
-//!
+//!```
 //! #[cfg(feature = "ffi")]
 //! #[no_mangle]
 //! pub unsafe extern "C" fn csv_reader_new(
@@ -164,15 +116,13 @@ pub mod features;
 pub mod decoders;
 pub mod encoders;
 pub mod macros;
-/*
+
 #[cfg(test)]
 mod test {
     use crate::csv::csv_reader::CsvReaderWithMap;
-    use crate::decoders::encoders::Decoder;
-    use crate::extensions::field_extension::Datable;
-    use crate::extensions::row_extension::IterableRow;
+    use crate::decoders::decoders::Encoding;
     use crate::models::csv_config::CsvConfig;
-    use crate::models::datatype::DataType;
+    use crate::models::data::Data;
 
     #[test]
     fn read_csv(){
@@ -181,9 +131,8 @@ mod test {
             b',',
             0u8,
             b'\n',
-            Decoder::Windows1252,
-            Vec::new(),
-            false,
+            Encoding::Windows1252,
+            false
         );
         //Open the file
         let mut f = match CsvReaderWithMap::open("data.1.csv", &cfg) {
@@ -191,29 +140,17 @@ mod test {
             Err(e) => panic!("{}", e)
         };
         // Process Lines (As you can observe, you can pass differents config on each stage, to improve customization)
-        while let Some(raw_row) = f.next_raw() {
-            let mut iter = raw_row.get_iterator(&cfg);
-            //This is not efficient, but for demostration works
-            let mut rr_str = String::new();
-            while let Some(row) = iter.next() {
-                //Count row fields
-                let fields_count = iter.count_fields(cfg.delimiter, cfg.string_separator);
-                println!("Fields count: {}", fields_count);
-                //Extract desired field
-                 if let Some(field_0) = iter.get_field_index(0){
-                     //Get field 0, Id as number
-                     rr_str.push_str(&format!("{},", field_0.get_as_data(&cfg,DataType::Integer)));
-                 }               
-                //Detect the other fields
-                let data = row.get_as_data_autodetect(&cfg);
-                //You can aggregate field, due fmt::Display is already implemented
-                rr_str.push_str(&format!("{},", data));
-            }
-            println!("{}", rr_str);
+        while let Some(mut raw_row) = f.next_raw() {
+            
+            let sec = raw_row.get_index(0).unwrap();
+            let data = sec.get_data(Encoding::Windows1252);
+            let string = match data {
+                Data::Text(s) => s,
+                _ => "".to_string()
+            };
+            println!(" Field 2: {}",string);
+            
         }
 
     }
 }
-
-
- */
