@@ -28,6 +28,11 @@ impl <'mmap> Field<'mmap>{
             slice: &[]
         }
     }
+    /// ## Get Slice
+    /// - Obtains a reference of the data.
+    pub fn get_slice(&self) -> &[u8]{
+        self.slice
+    }
 
     /// ## Decode Function
     /// - Decode the referenced bytes into a Cow<str>

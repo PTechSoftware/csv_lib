@@ -60,12 +60,11 @@ impl<'mmap> InRowIter<'mmap> {
     }
     #[inline(always)]
     /// Extract the content of a field in raw format.
-    pub fn get_field_index(&mut self, mut target: usize) -> Option<&'mmap [u8]> {
-        while let Some(field) = self.next() {
-            if target == 0 {
-                return Some(field);
+    pub fn get_field_index(&mut self, target: usize) -> Option<&'mmap [u8]> {
+        for (idx, el ) in self.enumerate(){
+            if idx == target {
+                return Some(el);
             }
-            target -= 1;
         }
         None
     }
@@ -75,7 +74,6 @@ impl<'mmap> Iterator for InRowIter<'mmap> {
     type Item = &'mmap [u8];
     #[inline(always)]
     fn next(&mut self) -> Option<Self::Item> {
-        /// ESTO ESTA MAL 
         if self.cursor >= self.line.len() {
             return None;
         }
@@ -130,5 +128,29 @@ impl<'mmap> Iterator for InRowIter<'mmap> {
         let field = &slice[start_offset..slice.len() - end_offset];
         self.cursor = self.line.len();
         Some(field)
+    }
+}
+
+
+
+
+#[cfg(test)]
+mod tests {
+    use crate::decoders::decoders::Encoding::Windows1252;
+    use crate::models::in_row_iter::InRowIter;
+
+    #[test]
+    fn test_iter_next(){
+
+        let csv_data = b"uno;dos;3;cuatro;cinco;6;siete;ocho;9";
+        let row = InRowIter::new(csv_data, b';', 0u8);
+
+        
+        for (i, f) in row.enumerate(){
+            let dec = Windows1252.decode(f);
+            println!("Field: {} Data: {}", i, dec.as_ref());
+        }
+        
+        
     }
 }

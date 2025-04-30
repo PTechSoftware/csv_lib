@@ -91,7 +91,14 @@ mod tests {
 
         // Closure que convierte cada Row en string y lo acumula
         let closure = |row: &mut Row, _cfg: &CsvConfig, acc: &mut Vec<String>| {
+            let dec_row = _cfg.encoding.decode(row.get_slice());
+            println!("Row Decoded: {}", dec_row);
+
             if let Some(first) = row.get_index(0){
+                let field = Encoding::Windows1252.decode(first.get_slice());
+                println!("Field Decoded: {}", field);
+                
+                
                 let data = first.get_data(Encoding::Windows1252);
                 let string = match data {
                     Data::Text(s) => s,
@@ -116,7 +123,7 @@ mod tests {
         // Ejecutamos el worker de forma async
         let result = worker.run().await;
 
-        println!("Result: \n{}", collected_rows.join("\n"));
+        //println!("Result: \n{}", collected_rows.join("\n"));
         // Validaciones
         if let WorkerResult::Ok = result {
             assert!(true);
