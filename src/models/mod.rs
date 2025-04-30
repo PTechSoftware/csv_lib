@@ -6,4 +6,6 @@ pub mod platform_info;
 pub mod in_row_iter;
 pub mod row;
 pub mod workers;
-mod field;
+pub mod field;
+pub mod worker_status;
+pub mod master_parallel;

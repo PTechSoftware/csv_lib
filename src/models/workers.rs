@@ -1,4 +1,6 @@
 use crate::models::csv_config::CsvConfig;
+use crate::models::row::Row;
+use crate::models::worker_status::WorkerResult;
 
 /// ## Worker node
 /// Processes a subsection of a CSV file slice using a configurable function.
@@ -7,33 +9,28 @@ use crate::models::csv_config::CsvConfig;
 /// - Owns its cursor and range.
 /// - Processes lines delimited by `cfg.line_break`.
 /// - Executes a user-defined closure that can mutate an external object `T`.
-pub struct Worker<'a, F, T>
+pub struct Worker<'mmap, F, T>
 where
     F: FnMut(&[u8], &CsvConfig, &mut T) + Send,
 {
-    slice: &'a [u8],
+    row: Row<'mmap>,
     cursor: usize,
     end: usize,
-    cfg: &'a CsvConfig,
+    cfg: &'mmap CsvConfig,
     execution: F,
-    target: &'a mut T,
+    target: &'mmap mut T,
 }
 
-impl<'a, F, T> Worker<'a, F, T>
+impl<'mmap, F, T> Worker<'mmap, F, T>
 where
     F: FnMut(&[u8], &CsvConfig, &mut T) + Send,
 {
-    /// Creates a new worker instance.
-    pub fn new(
-        slice: &'a [u8],
-        cfg: &'a CsvConfig,
-        cursor: usize,
-        end: usize,
-        execution: F,
-        target: &'a mut T,
+    /// ## Constructor
+    /// - Creates a new worker instance.
+    pub fn new(row: Row<'mmap>, cfg: &'mmap CsvConfig, cursor: usize, end: usize, execution: F, target: &'mmap mut T,
     ) -> Self {
         Self {
-            slice,
+            row,
             cursor,
             end,
             cfg,
@@ -42,23 +39,12 @@ where
         }
     }
 
-    /// Processes each line with the provided closure.
-    pub fn run(&mut self) {
+    /// ## Runner
+    ///
+    /// - Processes assigned lines with the provided closure.
+    pub async fn run(&mut self) -> WorkerResult {
         
-        
-        
-        
-        while self.cursor < self.end {
-            let remaining = &self.slice[self.cursor..self.end];
-            if let Some(pos) = memchr::memchr(self.cfg.line_break, remaining) {
-                let row = &remaining[..pos];
-                self.cursor += pos + 1;
-                (self.execution)(row, self.cfg, self.target);
-            } else {
-                let row = remaining;
-                self.cursor = self.end;
-                (self.execution)(row, self.cfg, self.target);
-            }
-        }
+
+        WorkerResult::Ok
     }
 }

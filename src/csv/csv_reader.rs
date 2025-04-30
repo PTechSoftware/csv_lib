@@ -14,7 +14,7 @@ use crate::models::row::Row;
 #[repr(C)]
 pub struct CsvReaderWithMap {
     config: CsvConfig,
-    mmap: Mmap, // Mmap owns the memory, no need for a lifetime
+    mmap: Mmap,
     platform: PlatformInfo,
     cursor: usize,
 }
@@ -24,6 +24,9 @@ impl CsvReaderWithMap {
         &self.config
     }
 
+    /// ## Open
+    /// - Sync execution.
+    /// - Open a CSV file and create a memory-mapped reader.
     pub fn open<P: AsRef<Path>>(path: P, config: &CsvConfig) -> Result<CsvReaderWithMap, CsvError> {
         let file = File::open(path).map_err(|err| {
             CsvError::FileError(format!("Cannot open file. Detail: {}", err))
@@ -43,6 +46,9 @@ impl CsvReaderWithMap {
         })
     }
 
+    /// ## Next Raw
+    /// - Sync execution.
+    /// - Returns the next row of data from the CSV file as a slice of bytes.
     pub fn next_raw(&mut self) -> Option<Row<'_>> {
         let linebreak = self.config.line_break;
         let delimiter = self.config.delimiter;
@@ -63,7 +69,6 @@ impl CsvReaderWithMap {
                 self.new_raw_neon()
             }
         }?;
-        
         Some(Row::new(slice, linebreak, delimiter, fm))
     }
 
