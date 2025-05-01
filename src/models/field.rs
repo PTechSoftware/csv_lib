@@ -1,8 +1,6 @@
 use std::borrow::Cow;
 use crate::decoders::decoders::Encoding;
-use crate::extensions::field_extension::Datable;
-use crate::io::number_parser::{parse_f32, parse_f64, parse_i32, parse_i64, parse_u32, parse_u64};
-use crate::models::data::Data;
+use crate::io::number_parser::{parse_f32, parse_f64, parse_i32, parse_i64, parse_i8, parse_u32, parse_u64};
 use crate::models::datatype::DataType;
 
 #[derive(Debug)]
@@ -61,48 +59,108 @@ impl <'mmap> Field<'mmap>{
         base.contains(input)
     }
 
-    /// ## Substring
-    /// - Extract A substring in bytes
-    pub fn substring(&self, start: usize, end: usize) -> &'mmap [u8] {
-        self.slice.get_substring(start, end)
-    }
-
-    /// ## Extract Data
-    /// - Try to get decodified data of the field
-    /// - If fails, returns Data::Empty
-    pub fn get_data(&self, encoding: Encoding) -> Data {
-        self.slice.get_as_data_autodetect(encoding)
-    }
-
-    /// ## Extract Data with specific DataType
-    /// - Try to get decodified data of the field
-    /// - If fails, returns Data::Empty
-    pub fn get_data_force_datatype(&self, encoding: Encoding, dt: DataType) -> Data{
-        if self.is_numeric_like(){
-            return match dt {
-                DataType::Byte => {Data::Byte(parse_i32(self.slice) as i8)}
-                DataType::UByte => {Data::UByte(parse_u32(self.slice) as u8)}
-                DataType::Short => {Data::Short(parse_i32(self.slice) as i16)},
-                DataType::UShort => {Data::UShort(parse_u32(self.slice) as u16)}
-                DataType::Integer => {Data::Integer(parse_i32(self.slice))}
-                DataType::UInteger => {Data::UInteger(parse_u32(self.slice))}
-                DataType::Long => {Data::Long(parse_i64(self.slice))}
-                DataType::ULong => {Data::ULong(parse_u64(self.slice))}
-                DataType::Float => {Data::Float(parse_f32(self.slice))}
-                DataType::Double => {Data::Double(parse_f64(self.slice))}
-                DataType::Boolean => {self.slice.get_as_data(encoding, dt)}
-                DataType::AutoDetect => {self.slice.get_as_data(encoding, dt)}
-                _ => {Data::Empty}
-            }
-        }
-        self.slice.get_as_data(encoding, dt)
-    }
-
     /// ## Is Numeric
     /// Checks if the field contains only digits, commas, or dots.
     pub fn is_numeric_like(&self) -> bool {
         self.slice.iter().all(|b| b.is_ascii_digit() || *b == b'.' || *b == b',' || *b == b'-')
     }
 
+    /// ## Gets &str from utf8.
+    /// - Almost null alloc
+    pub fn get_utf8_as_str(&self) -> &str {
+        std::str::from_utf8(self.slice).unwrap_or("")
+    }
+    /// ## Gets the Cow<&str> value
+    /// - You provide a decoding
+    pub fn get_as_cow_decoded(&self, encoding: Encoding) -> Cow<str>{
+        encoding.decode(self.slice)
+    }
+
+    /// ## Returns String (Allocates)
+    /// - Decode bytes and return a string
+    pub fn get_as_string(&self,encoding: Encoding) -> String {
+        let enc = encoding.decode(self.slice);
+        String::from(enc)
+    }
+
+    pub fn get_i8(&self) -> i8{
+        if self.is_numeric_like() {
+            return  parse_i8(self.slice)
+        }else{
+            let str = self.get_utf8_as_str();
+            return str.parse().unwrap_or(0);
+        }
+    }
+    pub fn get_u8(&self) -> u8 {
+        if self.is_numeric_like() {
+            parse_u32(self.slice) as u8
+        } else {
+            self.get_utf8_as_str().parse().unwrap_or(0)
+        }
+    }
+
+    pub fn get_i16(&self) -> i16 {
+        if self.is_numeric_like() {
+            parse_i32(self.slice) as i16
+        } else {
+            self.get_utf8_as_str().parse().unwrap_or(0)
+        }
+    }
+
+    pub fn get_u16(&self) -> u16 {
+        if self.is_numeric_like() {
+            parse_u32(self.slice) as u16
+        } else {
+            self.get_utf8_as_str().parse().unwrap_or(0)
+        }
+    }
+
+    pub fn get_i32(&self) -> i32 {
+        if self.is_numeric_like() {
+            parse_i32(self.slice)
+        } else {
+            self.get_utf8_as_str().parse().unwrap_or(0)
+        }
+    }
+
+    pub fn get_u32(&self) -> u32 {
+        if self.is_numeric_like() {
+            parse_u32(self.slice)
+        } else {
+            self.get_utf8_as_str().parse().unwrap_or(0)
+        }
+    }
+
+    pub fn get_i64(&self) -> i64 {
+        if self.is_numeric_like() {
+            parse_i64(self.slice)
+        } else {
+            self.get_utf8_as_str().parse().unwrap_or(0)
+        }
+    }
+
+    pub fn get_u64(&self) -> u64 {
+        if self.is_numeric_like() {
+            parse_u64(self.slice)
+        } else {
+            self.get_utf8_as_str().parse().unwrap_or(0)
+        }
+    }
+
+    pub fn get_f32(&self) -> f32 {
+        if self.is_numeric_like() {
+            parse_f32(self.slice)
+        } else {
+            self.get_utf8_as_str().parse().unwrap_or(0.0)
+        }
+    }
+
+    pub fn get_f64(&self) -> f64 {
+        if self.is_numeric_like() {
+            parse_f64(self.slice)
+        } else {
+            self.get_utf8_as_str().parse().unwrap_or(0.0)
+        }
+    }
 
 }

@@ -6,7 +6,7 @@ use std::sync::{Arc, Mutex};
 
 use memmap2::Mmap;
 use tokio::task::JoinHandle;
-
+use crate::decoders::decoders::Encoding;
 use crate::models::csv_config::CsvConfig;
 use crate::models::in_row_iter::InRowIter;
 
@@ -111,7 +111,8 @@ async fn test_async_parallel_mmap_reader() {
 
     reader
         .run_async(Arc::clone(&result), |line, cfg, acc| async move {
-            
+            //lifetime may not live enought [line after this comment]
+            //let a = cfg.line_break;
         })
         .await;
 

@@ -124,7 +124,6 @@ mod test {
     use crate::csv::csv_reader::CsvReaderWithMap;
     use crate::decoders::decoders::Encoding;
     use crate::models::csv_config::CsvConfig;
-    use crate::models::data::Data;
 
     #[test]
     fn read_csv(){
@@ -141,18 +140,7 @@ mod test {
             Ok(f) => f,
             Err(e) => panic!("{}", e)
         };
-        // Process Lines (As you can observe, you can pass differents config on each stage, to improve customization)
-        while let Some(mut raw_row) = f.next_raw() {
-            
-            let sec = raw_row.get_index(0);
-            let data = sec.get_data(Encoding::Windows1252);
-            let string = match data {
-                Data::Text(s) => s,
-                _ => "".to_string()
-            };
-            println!(" Field 2: {}",string);
-            
-        }
+
 
     }
 }
