@@ -72,6 +72,11 @@ impl CsvReaderWithMap {
         Some(Row::new(slice, delimiter, string_separator, fm))
     }
 
+    pub async fn excec_async_parallel(&mut self) {
+        
+    }
+
+    //--------------------- INTERNAL ---------------------------------------------------------------//
     #[cfg(target_arch = "aarch64")]
     pub(crate) fn new_raw_neon(&mut self) -> Option<&[u8]> {
         unsafe {
