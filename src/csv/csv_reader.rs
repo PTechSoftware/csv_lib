@@ -50,7 +50,7 @@ impl CsvReaderWithMap {
     /// - Sync execution.
     /// - Returns the next row of data from the CSV file as a slice of bytes.
     pub fn next_raw(&mut self) -> Option<Row<'_>> {
-        let linebreak = self.config.line_break;
+        let string_separator = self.config.string_separator;
         let delimiter = self.config.delimiter;
         let fm = self.config.force_memcach3;
         let slice = if &self.config.force_memcach3 == &true {
@@ -69,7 +69,7 @@ impl CsvReaderWithMap {
                 self.new_raw_neon()
             }
         }?;
-        Some(Row::new(slice, linebreak, delimiter, fm))
+        Some(Row::new(slice, delimiter, string_separator, fm))
     }
 
     #[cfg(target_arch = "aarch64")]
