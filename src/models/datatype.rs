@@ -18,7 +18,6 @@ pub enum DataType {
     Float,
     Double,
     Boolean,
-    Custom,
     Empty,
     AutoDetect
 }
@@ -40,7 +39,6 @@ impl Display for DataType {
             DataType::Float => {write!(f, "Float")}
             DataType::Double => {write!(f, "Double")}
             DataType::Boolean => {write!(f, "Boolean")}
-            DataType::Custom => {write!(f, "Custom")}
             DataType::Empty => {write!(f, "Empty")}
             DataType::AutoDetect => {write!(f, "AutoDetect")}
         }

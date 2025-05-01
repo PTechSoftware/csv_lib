@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 use crate::decoders::decoders::Encoding;
 use crate::extensions::field_extension::Datable;
-use crate::io::parser::parse_field_fast_u8;
+use crate::io::number_parser::{parse_f32, parse_f64, parse_i32, parse_i64, parse_u32, parse_u64};
 use crate::models::data::Data;
 use crate::models::datatype::DataType;
 
@@ -79,9 +79,22 @@ impl <'mmap> Field<'mmap>{
     /// - If fails, returns Data::Empty
     pub fn get_data_force_datatype(&self, encoding: Encoding, dt: DataType) -> Data{
         if self.is_numeric_like(){
-           return  parse_field_fast_u8(self.slice,&dt );
+            return match dt {
+                DataType::Byte => {Data::Byte(parse_i32(self.slice) as i8)}
+                DataType::UByte => {Data::UByte(parse_u32(self.slice) as u8)}
+                DataType::Short => {Data::Short(parse_i32(self.slice) as i16)},
+                DataType::UShort => {Data::UShort(parse_u32(self.slice) as u16)}
+                DataType::Integer => {Data::Integer(parse_i32(self.slice))}
+                DataType::UInteger => {Data::UInteger(parse_u32(self.slice))}
+                DataType::Long => {Data::Long(parse_i64(self.slice))}
+                DataType::ULong => {Data::ULong(parse_u64(self.slice))}
+                DataType::Float => {Data::Float(parse_f32(self.slice))}
+                DataType::Double => {Data::Double(parse_f64(self.slice))}
+                DataType::Boolean => {self.slice.get_as_data(encoding, dt)}
+                DataType::AutoDetect => {self.slice.get_as_data(encoding, dt)}
+                _ => {Data::Empty}
+            }
         }
-        
         self.slice.get_as_data(encoding, dt)
     }
 
@@ -90,7 +103,6 @@ impl <'mmap> Field<'mmap>{
     pub fn is_numeric_like(&self) -> bool {
         self.slice.iter().all(|b| b.is_ascii_digit() || *b == b'.' || *b == b',' || *b == b'-')
     }
-
 
 
 }

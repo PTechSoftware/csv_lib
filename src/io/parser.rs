@@ -56,33 +56,7 @@ fn auto_detect_from_str(input: &str) -> Data {
     }
 }
 
-/// ## Fast-path parser from raw byte slice when ASCII is likely.
-/// Avoids allocation unless needed. Works only for number-like fields.
-#[inline(always)]
-pub fn parse_field_fast_u8(input: &[u8], data_type: &DataType) -> Data {
-    // Attempt to convert to UTF-8 &str
-    let input_str = match std::str::from_utf8(input) {
-        Ok(s) => s,
-        Err(_) => return Data::Empty,
-    };
 
-    match data_type {
-        DataType::Text => Data::Text(input_str.to_owned()),
-        DataType::Byte => input_str.parse::<i8>().map_or(Data::Empty, Data::Byte),
-        DataType::UByte => input_str.parse::<u8>().map_or(Data::Empty, Data::UByte),
-        DataType::Short => input_str.parse::<i16>().map_or(Data::Empty, Data::Short),
-        DataType::UShort => input_str.parse::<u16>().map_or(Data::Empty, Data::UShort),
-        DataType::Integer => input_str.parse::<i32>().map_or(Data::Empty, Data::Integer),
-        DataType::UInteger => input_str.parse::<u32>().map_or(Data::Empty, Data::UInteger),
-        DataType::Long => input_str.parse::<i64>().map_or(Data::Empty, Data::Long),
-        DataType::ULong => input_str.parse::<u64>().map_or(Data::Empty, Data::ULong),
-        DataType::Float => input_str.parse::<f32>().map_or(Data::Empty, Data::Float),
-        DataType::Double => input_str.parse::<f64>().map_or(Data::Empty, Data::Double),
-        DataType::Boolean => parse_bool_str(input_str),
-        DataType::AutoDetect => auto_detect_from_str(input_str),
-        _ => Data::Empty,
-    }
-}
 
 
 #[cfg(test)]
