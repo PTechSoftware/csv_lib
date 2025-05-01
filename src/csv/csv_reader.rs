@@ -1,3 +1,4 @@
+
 #[cfg(target_arch = "x86_64")]
 use crate::helpers::bytes_helper::locate_line_break_avx2;
 #[cfg(target_arch = "aarch64")]
@@ -22,6 +23,10 @@ pub struct CsvReaderWithMap {
 impl CsvReaderWithMap {
     pub fn get_config(&self) -> &CsvConfig {
         &self.config
+    }
+
+    pub fn get_slice(&self) -> &[u8] {
+        &self.mmap[..]
     }
 
     /// ## Open
