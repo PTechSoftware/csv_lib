@@ -74,12 +74,15 @@ impl<'mmap> InRowIter<'mmap> {
     /// Extract the content of a field in raw format.
     pub fn get_field_index(&mut self, target: usize) -> Option<&'mmap [u8]> {
         let mut count = 0;
+        let actual = self.get_cursor();
         while let Some(el) = self.next(){
             if count == target {
+                self.set_cursor(actual);
                 return Some(el);
             }
             count = count + 1;
         }
+        self.set_cursor(actual);
         None
     }
 }
