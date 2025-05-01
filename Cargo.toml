@@ -39,6 +39,8 @@ memmap2 = "0.9.5"
 tokio = { version = "1.44.2", features = ["rt-multi-thread"] }
 crossbeam = "0.8.4"
 futures = "0.3.31"
+num_cpus = "1.16.0"
+tempfile = "3.19.1"
 
 
 [dev-dependencies]

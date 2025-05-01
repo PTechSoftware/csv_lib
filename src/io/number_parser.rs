@@ -5,7 +5,7 @@ use std::arch::x86_64::*;
 
 #[cfg(target_arch = "aarch64")]
 use std::arch::aarch64::*;
-
+use std::arch::is_aarch64_feature_detected;
 
 fn parse_u64_fallback(bytes: &[u8]) -> u64 {
     let mut result = 0u64;
@@ -37,7 +37,9 @@ pub fn parse_u64(bytes: &[u8]) -> u64 {
     }
     #[cfg(target_arch = "aarch64")]
     {
-        return unsafe { parse_u64_neon(bytes) };
+        if is_aarch64_feature_detected!("neon") {
+            return unsafe { parse_u64_neon(bytes) };
+        }
     }
     parse_u64_fallback(bytes)
 }
@@ -93,7 +95,9 @@ pub fn parse_u32(bytes: &[u8]) -> u32 {
     }
     #[cfg(target_arch = "aarch64")]
     {
-        return parse_u32_neon(bytes);
+        if is_aarch64_feature_detected!("neon") {
+            return unsafe { parse_u32_neon(bytes) };
+        }
     }
     parse_u32_fallback(bytes)
 }
@@ -154,9 +158,10 @@ unsafe fn parse_i32_avx2(bytes: &[u8]) -> i32 { unsafe {
     }
 }
 
-#[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
-#[inline(always)]
+#[cfg(target_arch = "aarch64")]
+#[target_feature(enable = "neon")]
 fn parse_i32_neon(bytes: &[u8]) -> i32 {
+    
     parse_u32_neon(bytes) as i32
 }
 
@@ -170,7 +175,9 @@ pub fn parse_i32(bytes: &[u8]) -> i32 {
     }
     #[cfg(target_arch = "aarch64")]
     {
-        return parse_i32_neon(bytes);
+        if is_aarch64_feature_detected!("neon") {
+            return unsafe { parse_i32_neon(bytes) };
+        }
     }
     parse_i32_fallback(bytes)
 }
@@ -197,7 +204,6 @@ unsafe fn parse_i64_avx2(bytes: &[u8]) -> i64 {
 }
 #[cfg(target_arch = "aarch64")]
 #[target_feature(enable = "neon")]
-#[inline(always)]
 unsafe fn parse_i64_neon(bytes: &[u8]) -> i64 {
     parse_u32_neon(bytes) as i64
 }
@@ -212,7 +218,10 @@ pub fn parse_i64(bytes: &[u8]) -> i64 {
     }
     #[cfg(target_arch = "aarch64")]
     {
-        return parse_i64_neon(bytes);
+        if is_aarch64_feature_detected!("neon")
+        {
+        return unsafe { parse_i64_neon(bytes) };
+        }
     }
     parse_i64_fallback(bytes)
 }

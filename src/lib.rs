@@ -117,6 +117,7 @@ pub mod features;
 pub mod decoders;
 pub mod encoders;
 pub mod macros;
+mod parallel;
 
 #[cfg(test)]
 mod test {
@@ -143,7 +144,7 @@ mod test {
         // Process Lines (As you can observe, you can pass differents config on each stage, to improve customization)
         while let Some(mut raw_row) = f.next_raw() {
             
-            let sec = raw_row.get_index(0).unwrap();
+            let sec = raw_row.get_index(0);
             let data = sec.get_data(Encoding::Windows1252);
             let string = match data {
                 Data::Text(s) => s,
