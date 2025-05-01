@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 use crate::decoders::decoders::Encoding;
 use crate::extensions::field_extension::Datable;
+use crate::io::parser::parse_field_fast_u8;
 use crate::models::data::Data;
 use crate::models::datatype::DataType;
 
@@ -77,13 +78,17 @@ impl <'mmap> Field<'mmap>{
     /// - Try to get decodified data of the field
     /// - If fails, returns Data::Empty
     pub fn get_data_force_datatype(&self, encoding: Encoding, dt: DataType) -> Data{
+        if self.is_numeric_like(){
+           return  parse_field_fast_u8(self.slice,&dt );
+        }
+        
         self.slice.get_as_data(encoding, dt)
     }
 
     /// ## Is Numeric
     /// Checks if the field contains only digits, commas, or dots.
     pub fn is_numeric_like(&self) -> bool {
-        self.slice.iter().all(|b| b.is_ascii_digit() || *b == b'.' || *b == b',')
+        self.slice.iter().all(|b| b.is_ascii_digit() || *b == b'.' || *b == b',' || *b == b'-')
     }
 
 
