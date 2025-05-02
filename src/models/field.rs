@@ -1,7 +1,6 @@
 use std::borrow::Cow;
 use crate::decoders::decoders::Encoding;
 use crate::io::number_parser::{parse_f32, parse_f64, parse_i32, parse_i64, parse_i8, parse_u32, parse_u64};
-use crate::models::datatype::DataType;
 
 #[derive(Debug)]
 #[allow(dead_code)]
