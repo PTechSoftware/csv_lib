@@ -15,16 +15,14 @@ pub fn parallel_processing_csv<'mmap,Closure, Param>(
     shared: Arc<Mutex<Param>>,
 )
 where
-    Closure: FnMut(&mut Row<'mmap>, Arc<Mutex<Param>>) + Send + Clone + 'mmap,
+    Closure: FnMut(&mut Row<'mmap>,usize, Arc<Mutex<Param>>) + Send + Clone + 'mmap,
     Param: Send + Default + 'mmap,
 {
     let cores = num_cpus::get();
     let average = slice.len() / cores;
     let mut positions = vec![0; cores + 1];
-
     let mut iter = InRowIter::new(slice, line_break, string_delimiter);
     iter.set_cursor(average);
-
     let mut i = 1;
     while let Some(_) = iter.next() {
         if i >= positions.len() {
@@ -35,12 +33,10 @@ where
         i += 1;
     }
     positions[cores] = slice.len();
-
     scope(|s| {
         for i in 0..cores {
             let func = func.clone();
-            let param = Arc::clone(&shared); // comparte el Arc<Mutex<T>>
-
+            let param = Arc::clone(&shared);
             let slice = &slice[positions[i]..positions[i + 1]];
             s.spawn(move || {
                 execute_task_in_thread(
@@ -51,6 +47,7 @@ where
                     force_memchr,
                     func,
                     param,
+                    i
                 );
             });
         }
@@ -80,11 +77,17 @@ mod tests {
             Err(e) => panic!("{}", e),
         };
 
-        let data = file.get_slice(); // ✅ sigue vivo debajo
+        let data = file.get_slice(); 
 
 
         let shared = Shared::<i32>::default();
-        let closure = |_: &mut Row<'_>, target: Arc<Mutex<i32>>| {
+        let closure = |_: &mut Row<'_>, id_thread:usize, target: Arc<Mutex<i32>>| {
+            //Get thread Id
+            let _ = id_thread;
+            //Do some stuff
+            // ...
+            
+            //Acquire editable variable, and change it
             let mut lock = target.lock().unwrap();
             *lock += 1;
         };

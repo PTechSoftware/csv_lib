@@ -41,9 +41,88 @@ cargo add csv_lib --features ffi
 ---
 ## Usage:
 
-We use [Row](../csv_lib/docs/rows.md) and  [Field](../csv_lib/docs/fields.md) struct, to handle the navigation in the document.
+We use [Row](https://github.com/PTechSoftware/csv_lib/blob/v1.0.0/docs/fields.md) and  [Field](https://github.com/PTechSoftware/csv_lib/blob/v1.0.0/docs/rows.md) struct, to handle the navigation in the document.
 
+- For a full example project check `examples` folder.
 
+### One Core Example:
+
+```rust
+pub fn main(){
+    //Create Config
+    let cfg = CsvConfig::new(
+        b',',
+        0u8,
+        b'\n',
+        Encoding::Windows1252,
+        false
+    );
+    //Open the file
+    let f = match CsvReaderWithMap::open("data.csv", &cfg) {
+        Ok(f) => f,
+        Err(e) => panic!("{}", e)
+    };
+    // We extract different' s country's of the dataset :
+    // For example:
+    //Create a Hash Acumulator
+    let mut cities :HashSet<String>= HashSet::with_capacity(195);
+    //Iter over rows
+    while let Some(mut row) = f.next_raw() {
+        //Extract Field index 6 starting on 0
+        let city = row.get_index(6 );
+        // Decode bytes as &str
+        let name = city.get_utf8_as_str();
+        //Check and accumulate
+        if !cities.contains(name){
+            cities.insert(name.to_string());
+        }
+    }
+}
+```
+
+### Multicore Example:
+
+```rust
+pub fn main(){
+    //Create Config
+    let cfg = CsvConfig::new(
+        b',',
+        0u8,
+        b'\n',
+        Encoding::Windows1252,
+        false
+    );
+    //Open the file
+    let f = match CsvReaderWithMap::open("data.csv", &cfg) {
+        Ok(f) => f,
+        Err(e) => panic!("{}", e)
+    };
+
+    //Get Slice Reference
+    let data = f.get_slice();
+    //Create a shared counter
+    let shared = Shared::<i32>::default();
+    //Create de clousere executed on each thread (the ARC Mutex type must be the same as Shared)
+    let closure = |_: &mut Row<'_>, target: Arc<Mutex<i32>>| {
+        //Do some stuff
+        // ...
+        //Access editable variable.(Use after process due it blocks)
+        let mut lock = target.lock().unwrap();
+        *lock += 1;
+    };
+    //Execute parallel process
+    parallel_processing_csv(
+        data,
+        b'\n',
+        b',',
+        0u8,
+        false,
+        closure,
+        shared.arc(),
+    );
+    println!("Iterated Lines: {}", shared.lock())
+}
+```
 
 ---
 ## Changelog

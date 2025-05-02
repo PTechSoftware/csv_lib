@@ -21,7 +21,7 @@ All notable changes to this project will be documented in this file.
 ---
 
 ### Removed
-
+- Removed `avx512f` planned support. Require Rust nightly channel.
 - Removed `encoding_rs` dependency from `Cargo.toml`.
 - Removed `DataTypes` and `Data` (replaced by functions inside `Row` struct)
 ---
