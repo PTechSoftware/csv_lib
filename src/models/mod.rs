@@ -6,3 +6,4 @@ pub mod in_row_iter;
 pub mod row;
 pub mod field;
 pub mod worker_status;
+mod shared;
