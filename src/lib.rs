@@ -2,14 +2,13 @@
 //!
 //! A Rust library to read/write CSV files in the fastest way I know.
 //! 
-//! For further information, you can check the repo [here](https://github.com/PTechSoftware/csv_lib)
+//! For further information, and complete docs, you can check the repo [here](https://github.com/PTechSoftware/csv_lib)
 //!
 //! ## 3rd Party Crates Used:
 //!
 //! | Crate | Link |
 //! | :---- | :---- |
 //! | Memmap2 | [memmap2 crate](https://docs.rs/memmap2/latest/memmap2/) |
-//! | Encoding_rs | [encoding_rs crate](https://docs.rs/encoding_rs/latest/encoding_rs/) |
 //! | Memchr | [memchr crate](https://docs.rs/memchr/latest/memchr/) |
 //!
 //! ## Features
@@ -17,6 +16,8 @@
 //! - Custom delimiters support
 //! - Escape string support
 //! - Direct mapping from memory
+//! - Multicore Process
+//! - Low Ram Usage, even on big files
 //!
 //! ## FFI Support
 //! - Optional feature to allow usage from another language (e.g., C#).
@@ -116,16 +117,19 @@ pub mod extensions;
 pub mod features;
 pub mod decoders;
 pub mod encoders;
-mod parallel;
+pub mod parallel;
 
 #[cfg(test)]
 mod test {
+    use std::collections::HashSet;
+    use std::time::Instant;
     use crate::csv::csv_reader::CsvReaderWithMap;
     use crate::decoders::decoders::Encoding;
     use crate::models::csv_config::CsvConfig;
 
     #[test]
-    fn read_csv(){
+    fn read_csv_one_core(){
+        let elapsed = Instant::now();
         //Create Config
         let cfg = CsvConfig::new(
             b',',
@@ -135,11 +139,27 @@ mod test {
             false
         );
         //Open the file
-        let _f = match CsvReaderWithMap::open("data.1.csv", &cfg) {
+        let mut f = match CsvReaderWithMap::open("data.csv", &cfg) {
             Ok(f) => f,
             Err(e) => panic!("{}", e)
         };
-
+        // We extract different' s country's of the dataset :
+        // For example:
+        //Create a Hash Acumulator
+        let mut cities :HashSet<String>= HashSet::with_capacity(195);
+        //Iter over rows
+        while let Some(mut row) = f.next_raw() {
+            //Extract Field index 6 starting on 0
+            let city = row.get_index(6 );
+            // Decode bytes as &str
+            let name = city.get_utf8_as_str();
+            //Check and accumulate
+            if !cities.contains(name){
+                cities.insert(name.to_string());
+            }
+        }
+        println!("Executed in: {:?} ms", elapsed.elapsed().as_millis());
+        assert_ne!(cities.len(), 0);
 
     }
 }

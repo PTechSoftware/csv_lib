@@ -1,7 +1,9 @@
-# 📚 Csv Lib
+# 📚 Csv Lib 
+
+----
 
 A high-performance, zero-copy CSV reader for Rust, optimized for extremely fast parsing using:
-- 🔥 **Supports multithread complete Row process with a clousure,and a editable shared object**
+- 🔥[ New ] **Supports multithread complete Row process with a clousure,and a editable shared object**
 - **Memory-mapped files** (`memmap2`)
 - **SIMD acceleration** (AVX2 on x86_64, NEON on aarch64)
 - **memchr3 fallback** for broad CPU compatibility
@@ -23,12 +25,6 @@ A high-performance, zero-copy CSV reader for Rust, optimized for extremely fast 
 - 🚀 Safe cursor management
 - 🚀 UTF-8, Windows1252 and custom encoding support
 
----
-## 🧾 Changelog
-
----
-
-
 ## ⚙️ Installation
 
 Put in your terminal
@@ -42,6 +38,18 @@ If you also want FFI support:
 ```bash
 cargo add csv_lib --features ffi
 ```
+---
+## Usage:
+
+We use [Row](../csv_lib/docs/rows.md) and  [Field](../csv_lib/docs/fields.md) struct, to handle the navigation in the document.
+
+
+
+---
+## Changelog
+Check it [here](CHANGELOG.md)
+
+----
 
 
 ## 📈 Performance Tips
