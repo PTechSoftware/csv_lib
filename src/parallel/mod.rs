@@ -1,2 +1,2 @@
 pub mod parallel_reader;
-mod row_parallel;
+pub mod row_parallel;

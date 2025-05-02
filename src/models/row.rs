@@ -32,6 +32,22 @@ impl<'mmap> Row<'mmap> {
             iter : i,
         }
     }
+    /// ## Creates a new Empty row
+    pub fn new_empty() -> Self {
+        Self {
+            slice: &[],
+            cursor: 0,
+            field_separator: 0,
+            force_mem_cacher: false,
+            iter : InRowIter::new(&[], 0, 0),
+        }
+    }
+    
+    /// ## Is Empty
+    /// - Gets if a row is empty
+    pub fn is_empty(&self) -> bool {
+        self.slice.is_empty()
+    }
     
     /// ## Get Slice of &[[u8]] bytes
     /// - Gets a reference of the bytes inside row.

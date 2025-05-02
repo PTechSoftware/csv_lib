@@ -2,8 +2,8 @@ use std::cmp::min;
 use std::sync::{Arc, Mutex};
 use std::thread::scope;
 use crate::models::in_row_iter::InRowIter;
-use crate::models::row::Row;
 use crate::models::worker::execute_task_in_thread;
+use crate::parallel::row_parallel::RowParallel;
 
 pub fn parallel_processing_csv<'mmap,Closure, Param>(
     slice: &'mmap [u8],
@@ -15,7 +15,7 @@ pub fn parallel_processing_csv<'mmap,Closure, Param>(
     shared: Arc<Mutex<Param>>,
 )
 where
-    Closure: FnMut(&mut Row<'mmap>,usize, Arc<Mutex<Param>>) + Send + Clone + 'mmap,
+    Closure: FnMut(&mut RowParallel<'mmap>,usize, Arc<Mutex<Param>>) + Send + Clone + 'mmap,
     Param: Send + Default + 'mmap,
 {
     let cores = num_cpus::get();
@@ -63,6 +63,7 @@ mod tests {
     use crate::models::row::Row;
     use crate::models::shared::Shared;
     use crate::parallel::parallel_reader::parallel_processing_csv;
+    use crate::parallel::row_parallel::RowParallel;
 
     #[test]
     fn test_parallel_read() {
@@ -76,20 +77,23 @@ mod tests {
             Ok(f) => f,
             Err(e) => panic!("{}", e),
         };
-
-        let data = file.get_slice(); 
-
-
+        let data = file.get_slice();
         let shared = Shared::<i32>::default();
-        let closure = |_: &mut Row<'_>, id_thread:usize, target: Arc<Mutex<i32>>| {
+        let closure = |row: &mut RowParallel<'_>, id_thread:usize, target: Arc<Mutex<i32>>| {
             //Get thread Id
             let _ = id_thread;
+            //Access actual row
+            let _actual = row.get_row();
+            //Peek nex row
+            let next = row.peek_next();
             //Do some stuff
             // ...
-            
-            //Acquire editable variable, and change it
-            let mut lock = target.lock().unwrap();
-            *lock += 1;
+
+            //Acquire editable variable, and change it, for example at the final, to avoid locks
+            if next.is_empty() {
+                let mut lock = target.lock().unwrap();
+                *lock += 1;
+            }
         };
 
         parallel_processing_csv(

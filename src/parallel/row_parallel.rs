@@ -9,7 +9,6 @@ pub struct RowParallel<'mmap>{
     string_separator: u8,
     field_separator: u8,
     force_mem_cacher: bool,
-    iter : InRowIter<'mmap>,
     fulliter : InRowIter<'mmap>,
 }
 
@@ -26,7 +25,6 @@ impl<'mmap> RowParallel<'mmap>{
         field_separator: u8,
         force_mem_cacher: bool,
     )-> Self{
-        let iter = InRowIter::new(slice,field_separator,string_separator);
         let fulliter = InRowIter::new(full,field_separator,string_separator);
         Self{
             full,
@@ -36,7 +34,6 @@ impl<'mmap> RowParallel<'mmap>{
             string_separator,
             field_separator,
             force_mem_cacher,
-            iter,
             fulliter
         }
     }
@@ -52,6 +49,27 @@ impl<'mmap> RowParallel<'mmap>{
         )
     }
     
+    
+    /// ## Peek Next Row
+    /// - Check the newxt row. 
+    /// - If not return an empty row (checkit whit is empty func of row)
+    pub fn peek_next(&mut self) -> Row<'mmap>
+    {
+        let curs= self.fulliter.get_cursor();
+        if let Some(next) = self.fulliter.next() {
+            self.fulliter.set_cursor(curs);
+            Row::new(
+                next,
+                self.field_separator,
+                self.string_separator,
+                self.force_mem_cacher,
+            )
+        }else {
+            self.fulliter.set_cursor(curs);
+            Row::new_empty()
+        }
+        
+    }
     
     
 }
