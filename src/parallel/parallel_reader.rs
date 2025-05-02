@@ -60,7 +60,6 @@ mod tests {
     use std::sync::{Arc, Mutex};
     use crate::csv::csv_reader::CsvReaderWithMap;
     use crate::models::csv_config::CsvConfig;
-    use crate::models::row::Row;
     use crate::models::shared::Shared;
     use crate::parallel::parallel_reader::parallel_processing_csv;
     use crate::parallel::row_parallel::RowParallel;

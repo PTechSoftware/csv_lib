@@ -49,9 +49,9 @@ mod test {
     use crate::csv::csv_reader::CsvReaderWithMap;
     use crate::decoders::decoders::Encoding;
     use crate::models::csv_config::CsvConfig;
-    use crate::models::row::Row;
     use crate::models::shared::Shared;
     use crate::parallel::parallel_reader::parallel_processing_csv;
+    use crate::parallel::row_parallel::RowParallel;
 
     #[test]
     fn read_csv_one_core(){
@@ -106,10 +106,21 @@ mod test {
         //Create a shared counter
         let shared = Shared::<i32>::default();
         //Create de clousere executed on each thread (the ARC Mutex type must be the same as Shared)
-        let closure = |_: &mut Row<'_>,thread_id:usize, target: Arc<Mutex<i32>>| {
-            let _ = thread_id;
-            let mut lock = target.lock().unwrap();
-            *lock += 1;
+        let closure = |row: &mut RowParallel<'_>, id_thread:usize, target: Arc<Mutex<i32>>| {
+            //Get thread Id
+            let _ = id_thread;
+            //Access actual row
+            let _actual = row.get_row();
+            //Peek nex row
+            let next = row.peek_next();
+            //Do some stuff
+            // ...
+
+            //Acquire editable variable, and change it, for example at the final, to avoid locks
+            if next.is_empty() {
+                let mut lock = target.lock().unwrap();
+                *lock += 1;
+            }
         };
         //Execute parallel process
         parallel_processing_csv(
