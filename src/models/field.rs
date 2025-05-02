@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 use crate::decoders::decoders::Encoding;
 use crate::io::number_parser::{parse_f32, parse_f64, parse_i32, parse_i64, parse_i8, parse_u32, parse_u64};
-use crate::models::datatype::DataType;
+use crate::io::parser::parse_bool_str;
 
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -83,6 +83,8 @@ impl <'mmap> Field<'mmap>{
         String::from(enc)
     }
 
+    /// ## Parse i8
+    /// - Gets numeric value as i8. 
     pub fn get_i8(&self) -> i8{
         if self.is_numeric_like() {
             return  parse_i8(self.slice)
@@ -91,6 +93,8 @@ impl <'mmap> Field<'mmap>{
             return str.parse().unwrap_or(0);
         }
     }
+    /// ## Parse u8
+    /// - Gets numeric value as u8. 
     pub fn get_u8(&self) -> u8 {
         if self.is_numeric_like() {
             parse_u32(self.slice) as u8
@@ -98,7 +102,8 @@ impl <'mmap> Field<'mmap>{
             self.get_utf8_as_str().parse().unwrap_or(0)
         }
     }
-
+    /// ## Parse i16
+    /// - Gets numeric value as i16. 
     pub fn get_i16(&self) -> i16 {
         if self.is_numeric_like() {
             parse_i32(self.slice) as i16
@@ -106,7 +111,8 @@ impl <'mmap> Field<'mmap>{
             self.get_utf8_as_str().parse().unwrap_or(0)
         }
     }
-
+    /// ## Parse u16
+    /// - Gets numeric value as u16. 
     pub fn get_u16(&self) -> u16 {
         if self.is_numeric_like() {
             parse_u32(self.slice) as u16
@@ -114,7 +120,8 @@ impl <'mmap> Field<'mmap>{
             self.get_utf8_as_str().parse().unwrap_or(0)
         }
     }
-
+    /// ## Parse i32
+    /// - Gets numeric value as i32. 
     pub fn get_i32(&self) -> i32 {
         if self.is_numeric_like() {
             parse_i32(self.slice)
@@ -122,7 +129,8 @@ impl <'mmap> Field<'mmap>{
             self.get_utf8_as_str().parse().unwrap_or(0)
         }
     }
-
+    /// ## Parse u32
+    /// - Gets numeric value as u32. 
     pub fn get_u32(&self) -> u32 {
         if self.is_numeric_like() {
             parse_u32(self.slice)
@@ -130,7 +138,8 @@ impl <'mmap> Field<'mmap>{
             self.get_utf8_as_str().parse().unwrap_or(0)
         }
     }
-
+    /// ## Parse i64
+    /// - Gets numeric value as i64. 
     pub fn get_i64(&self) -> i64 {
         if self.is_numeric_like() {
             parse_i64(self.slice)
@@ -138,7 +147,8 @@ impl <'mmap> Field<'mmap>{
             self.get_utf8_as_str().parse().unwrap_or(0)
         }
     }
-
+    /// ## Parse u64
+    /// - Gets numeric value as u64. 
     pub fn get_u64(&self) -> u64 {
         if self.is_numeric_like() {
             parse_u64(self.slice)
@@ -146,7 +156,8 @@ impl <'mmap> Field<'mmap>{
             self.get_utf8_as_str().parse().unwrap_or(0)
         }
     }
-
+    /// ## Parse f32
+    /// - Gets numeric value as f32. 
     pub fn get_f32(&self) -> f32 {
         if self.is_numeric_like() {
             parse_f32(self.slice)
@@ -154,13 +165,20 @@ impl <'mmap> Field<'mmap>{
             self.get_utf8_as_str().parse().unwrap_or(0.0)
         }
     }
-
+    /// ## Parse f64
+    /// - Gets numeric value as f64. 
     pub fn get_f64(&self) -> f64 {
         if self.is_numeric_like() {
             parse_f64(self.slice)
         } else {
             self.get_utf8_as_str().parse().unwrap_or(0.0)
         }
+    }
+    /// ## Parse boolean
+    /// - Gets numeric value as boolean. 
+    pub fn get_boolean(&self) -> bool {
+        let dec = self.get_utf8_as_str();
+        parse_bool_str(dec)
     }
 
 }

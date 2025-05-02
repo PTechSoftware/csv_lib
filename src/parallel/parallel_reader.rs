@@ -75,7 +75,7 @@ mod tests {
         cfg.delimiter = b';';
         cfg.string_separator = b'"';
 
-        let file = match CsvReaderWithMap::open("/Users/nacho/Desarrollos/csv_lib/data.1.csv", &cfg) {
+        let file = match CsvReaderWithMap::open("data.csv", &cfg) {
             Ok(f) => f,
             Err(e) => panic!("{}", e),
         };

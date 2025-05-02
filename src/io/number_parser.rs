@@ -1,10 +1,11 @@
-//! simd_parse: SIMD-powered numeric parsing for &[u8] slices
+#[allow(dead_code)]
 
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
 
 #[cfg(target_arch = "aarch64")]
 use std::arch::aarch64::*;
+#[cfg(target_arch = "aarch64")]
 use std::arch::is_aarch64_feature_detected;
 
 fn parse_u64_fallback(bytes: &[u8]) -> u64 {
@@ -18,7 +19,9 @@ fn parse_u64_fallback(bytes: &[u8]) -> u64 {
 #[cfg(target_arch = "x86_64")]
 #[target_feature(enable = "avx2")]
 unsafe fn parse_u64_avx2(bytes: &[u8]) -> u64 {
-    parse_u32_avx2(bytes) as u64
+    unsafe {
+        parse_u32_avx2(bytes) as u64
+    }
 }
 
 #[cfg(target_arch = "aarch64")]
@@ -121,6 +124,7 @@ pub fn parse_i8(bytes: &[u8]) -> i8 {
 }
 
 #[inline(always)]
+#[allow(dead_code)]
 fn parse_i16_fallback(bytes: &[u8]) -> i16 {
     let mut result = 0i16;
     let mut neg = false;
@@ -134,6 +138,7 @@ fn parse_i16_fallback(bytes: &[u8]) -> i16 {
 }
 
 #[inline(always)]
+#[allow(dead_code)]
 pub fn parse_i16(bytes: &[u8]) -> i16 {
     parse_i16_fallback(bytes)
 }

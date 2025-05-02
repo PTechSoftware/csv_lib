@@ -136,7 +136,7 @@ mod test {
             false
         );
         //Open the file
-        let mut f = match CsvReaderWithMap::open("data.1.csv", &cfg) {
+        let _f = match CsvReaderWithMap::open("data.1.csv", &cfg) {
             Ok(f) => f,
             Err(e) => panic!("{}", e)
         };
