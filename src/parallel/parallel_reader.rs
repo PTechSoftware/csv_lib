@@ -1,122 +1,107 @@
-
-
-use std::fs::File;
-use std::path::Path;
+use std::cmp::min;
 use std::sync::{Arc, Mutex};
-
-use memmap2::Mmap;
-use tokio::task::JoinHandle;
-use crate::decoders::decoders::Encoding;
-use crate::models::csv_config::CsvConfig;
+use std::thread::scope;
 use crate::models::in_row_iter::InRowIter;
+use crate::models::row::Row;
+use crate::models::worker::execute_task_in_thread;
 
-pub struct ParallelMmapReader {
-    mmap: Mmap,
-    config: CsvConfig,
+pub fn parallel_processing_csv<'mmap,Closure, Param>(
+    slice: &'mmap [u8],
+    line_break: u8,
+    field_separator: u8,
+    string_delimiter: u8,
+    force_memchr: bool,
+    func: Closure,
+    shared: Arc<Mutex<Param>>,
+)
+where
+    Closure: FnMut(&mut Row<'mmap>, Arc<Mutex<Param>>) + Send + Clone + 'mmap,
+    Param: Send + Default + 'mmap,
+{
+    let cores = num_cpus::get();
+    let average = slice.len() / cores;
+    let mut positions = vec![0; cores + 1];
+
+    let mut iter = InRowIter::new(slice, line_break, string_delimiter);
+    iter.set_cursor(average);
+
+    let mut i = 1;
+    while let Some(_) = iter.next() {
+        if i >= positions.len() {
+            break;
+        }
+        positions[i] = min(iter.get_cursor(), slice.len());
+        iter.set_cursor(average * i);
+        i += 1;
+    }
+    positions[cores] = slice.len();
+
+    scope(|s| {
+        for i in 0..cores {
+            let func = func.clone();
+            let param = Arc::clone(&shared); // comparte el Arc<Mutex<T>>
+
+            let slice = &slice[positions[i]..positions[i + 1]];
+            s.spawn(move || {
+                execute_task_in_thread(
+                    slice,
+                    line_break,
+                    field_separator,
+                    string_delimiter,
+                    force_memchr,
+                    func,
+                    param,
+                );
+            });
+        }
+    });
 }
 
-impl ParallelMmapReader {
-    pub fn new<P: AsRef<Path>>(path: P, config: CsvConfig) -> std::io::Result<Self> {
-        let file = File::open(path)?;
-        let mmap = unsafe { Mmap::map(&file)? };
-        Ok(Self { mmap, config })
-    }
 
-    /// Lanza procesamiento 100% async por chunks y ejecuta una closure async por línea
-    pub async fn run_async<F, Fut, T>(&self, target: Arc<Mutex<T>>, closure: F)
-    where
-        F: Fn(&[u8], &CsvConfig, Arc<Mutex<T>>) -> Fut + Send + Sync + Clone + 'static,
-        Fut: std::future::Future<Output = ()> + Send + 'static,
-        T: Send + 'static,
-    {
-        let cfg = &self.config;
-        let mmap_ref: &'static [u8] = unsafe {
-            // ⚠️ convertimos a 'static con la garantía de que self vive durante la tarea
-            std::mem::transmute::<&[u8], &'static [u8]>(&self.mmap[..])
+#[cfg(test)]
+mod tests {
+    use std::sync::{Arc, Mutex};
+    use crate::csv::csv_reader::CsvReaderWithMap;
+    use crate::models::csv_config::CsvConfig;
+    use crate::models::row::Row;
+    use crate::models::shared::Shared;
+    use crate::parallel::parallel_reader::parallel_processing_csv;
+
+    #[test]
+    fn test_parallel_read() {
+
+        let mut cfg = CsvConfig::default();
+        cfg.line_break = b'\n';
+        cfg.delimiter = b';';
+        cfg.string_separator = b'"';
+
+        let file = match CsvReaderWithMap::open("/Users/nacho/Desarrollos/csv_lib/data.1.csv", &cfg) {
+            Ok(f) => f,
+            Err(e) => panic!("{}", e),
         };
 
-        let num_chunks = num_cpus::get();
-        let chunks = Self::calculate_line_chunks(mmap_ref, cfg.line_break, num_chunks);
+        let data = file.get_slice(); // ✅ sigue vivo debajo
 
-        let mut handles: Vec<JoinHandle<()>> = Vec::with_capacity(num_chunks);
 
-        for (start, end) in chunks {
-            let cfg = cfg.clone();
-            let closure = closure.clone();
-            let target = Arc::clone(&target);
-            let mmap_ptr = &mmap_ref[start..end]; // ⚠️ ahora sí es seguro porque mmap_ref es 'static
+        let shared = Shared::<i32>::default();
+        let closure = |_: &mut Row<'_>, target: Arc<Mutex<i32>>| {
+            let mut lock = target.lock().unwrap();
+            *lock += 1;
+        };
 
-            handles.push(tokio::spawn(async move {
-                let mut cursor = 0;
-                while cursor < mmap_ptr.len() {
-                    if let Some(pos) = memchr::memchr(cfg.line_break, &mmap_ptr[cursor..]) {
-                        let line = &mmap_ptr[cursor..cursor + pos];
-                        if !line.is_empty() {
-                            closure(line, &cfg, Arc::clone(&target)).await;
-                        }
-                        cursor += pos + 1;
-                    } else {
-                        break;
-                    }
-                }
-            }));
-        }
+        parallel_processing_csv(
+            data,               // &[u8] slice del archivo completo
+            b'\n',
+            b';',
+            b'"',
+            false,
+            closure,
+            shared.arc(),
+        );
 
-        for handle in handles {
-            let _ = handle.await;
-        }
+        println!("Resultado: {}", shared.lock());
+
     }
 
 
-    fn calculate_line_chunks(data: &[u8], line_break: u8, parts: usize) -> Vec<(usize, usize)> {
-        let mut boundaries = vec![0];
-        let mut approx = data.len() / parts;
-        let mut cursor = approx;
-
-        while boundaries.len() < parts {
-            while cursor < data.len() && data[cursor] != line_break {
-                cursor += 1;
-            }
-            if cursor < data.len() {
-                boundaries.push(cursor + 1); // start of next chunk
-                cursor += approx;
-            } else {
-                break;
-            }
-        }
-
-        boundaries.push(data.len());
-
-        boundaries.windows(2).map(|w| (w[0], w[1])).collect()
-    }
-}
-#[tokio::test]
-async fn test_async_parallel_mmap_reader() {
-    use std::fs::write;
-    use tempfile::NamedTempFile;
-
-    let file = NamedTempFile::new().unwrap();
-    write(file.path(), b"x;1\ny;2\nz;3\nw;4\nk;5\n").unwrap();
-
-    let cfg = CsvConfig {
-        delimiter: b';',
-        line_break: b'\n',
-        string_separator: b'"',
-        ..Default::default()
-    };
-
-    let reader = ParallelMmapReader::new(file.path(), cfg).unwrap();
-
-    let result = Arc::new(Mutex::new(Vec::<String>::new()));
-
-    reader
-        .run_async(Arc::clone(&result), |line, cfg, acc| async move {
-            //lifetime may not live enought [line after this comment]
-            //let a = cfg.line_break;
-        })
-        .await;
-
-    let mut r = result.lock().unwrap().clone();
-    r.sort();
-    assert_eq!(r, vec!["k", "w", "x", "y", "z"]);
 }

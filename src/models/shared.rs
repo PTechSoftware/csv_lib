@@ -3,7 +3,6 @@ use std::sync::{Arc, Mutex, MutexGuard};
 
 /// ## Shared struct
 /// Encapsula un `Arc<Mutex<T>>` con acceso simplificado.
-#[derive(Clone, Debug)]
 pub struct Shared<T>
 where
     T: Default,

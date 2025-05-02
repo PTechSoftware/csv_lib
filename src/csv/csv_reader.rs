@@ -29,6 +29,7 @@ impl CsvReaderWithMap {
         &self.mmap[..]
     }
 
+
     /// ## Open
     /// - Sync execution.
     /// - Open a CSV file and create a memory-mapped reader.
