@@ -116,7 +116,6 @@ pub mod extensions;
 pub mod features;
 pub mod decoders;
 pub mod encoders;
-pub mod macros;
 mod parallel;
 
 #[cfg(test)]
