@@ -1,4 +1,4 @@
-[1746305258] OS: windows | Arch: x86_64 | Intel Core i9 12900 KF
+[1746305258] OS: windows | Arch: x86_64 | Intel Core i9 12900 KF Chipset [ Desktop ]
     File: H:\data_1000000000.txt
     [Sync] Times: [58564, 58405, 59488]
     [Sync] Average: 58819 ms (58.819 s)
@@ -6,4 +6,22 @@
     [Multi-Core (Lock)] Average: 191619 ms (191.619 s)
     [Multi-Core] Times: [39465, 39636, 39642]
     [Multi-Core] Average: 39581 ms (39.581 s)
+
+[1746306782] OS: windows | Arch: x86_64 | Intel Core i7 12650H Chipset [ Notebook ]
+    File: E:\data_1000000000.txt
+    [Sync] Times: [77317, 77419, 77655]
+    [Sync] Average: 77463 ms (77.463 s)
+    [Multi-Core (Lock)] Times: [169858, 231349, 247977]
+    [Multi-Core (Lock)] Average: 216394 ms (216.394 s)
+    [Multi-Core] Times: [52461, 52232, 52684]
+    [Multi-Core] Average: 52459 ms (52.459 s)
+
+[1746306780] OS: macos | Arch: aarch64 | M2 2022 Chipset [Notebook]
+    File: /Users/nacho/Desktop/exchange_folder/data_1000000000.txt
+    [Sync] Times: [76919, 76697, 75396]
+    [Sync] Average: 76337 ms (76.337 s)
+    [Multi-Core (Lock)] Times: [121515, 121267, 120124]
+    [Multi-Core (Lock)] Average: 120968 ms (120.968 s)
+    [Multi-Core] Times: [75163, 72898, 73156]
+    [Multi-Core] Average: 73739 ms (73.739 s)
 

@@ -106,7 +106,7 @@ pub fn main(){
     let closure = |_: &mut Row<'_>, target: Arc<Mutex<i32>>| {
         //Do some stuff
         // ...
-        //Access editable variable.(Use after process due it blocks)
+        //Access editable variable.(Use after process due it blocks). Omit this lock uf you can.
         let mut lock = target.lock().unwrap();
         *lock += 1;
     };
@@ -123,6 +123,17 @@ pub fn main(){
     println!("Iterated Lines: {}", shared.lock())
 }
 ```
+# 📊 CSV Parsing Benchmark Results between different functions of the library 
+
+- **Full line decoding:** If you decode only needed fields performance will be better.
+- **File Size:** `data_1000000000.txt` (approx. 14GB)  
+- **Test Metric:** Time in milliseconds (ms) — lower is better
+
+| OS | Arch    | CPU/Chipset              | Type       | Sync Avg       | Multi-Core (Lock) Avg | Multi-Core Avg    |
+|-|---------|---------------------------|------------|----------------|------------------------|-------------------|
+| Windows | x86_64  | i9-12900KF [Desktop]      | Execution  | 58,819 ms (58.82 s) | 191,619 ms (191.62 s)  | 39,581 ms (39.58 s) |
+| Windows | x86_64  | i7-12650H [Notebook]      | Execution  | 77,463 ms (77.46 s) | 216,394 ms (216.39 s)  | 52,459 ms (52.46 s) |
+| macOS   | aarch64 | Apple M2 2022 [Notebook]  | Execution  | 76,337 ms (76.34 s) | 120,968 ms (120.97 s)  | 73,739 ms (73.74 s) |
 
 ---
 ## Changelog

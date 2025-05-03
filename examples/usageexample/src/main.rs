@@ -64,7 +64,7 @@ fn main() {
     config.string_separator = 0u8;
     config.delimiter = b',';
 
-    let csv_path = "H:\\data_1000000000.txt";
+    let csv_path = "/Users/nacho/Desktop/exchange_folder/data_1000000000.txt";
 
     // Funciones benchmark
     let benchmarks: &[(&str, fn(CsvReaderWithMap) -> u128)] = &[
