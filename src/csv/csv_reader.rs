@@ -65,17 +65,13 @@ impl CsvReaderWithMap {
             #[cfg(target_arch = "x86_64")]
             {
                 if is_x86_feature_detected!("avx2") {
-                    println!("using AVX2");
                     unsafe { self.new_raw_avx2() }
                 } else {
-
-                    println!("using Compat Code");
                     self.next_raw_memchr3()
                 }
             }
             #[cfg(target_arch = "aarch64")]
             {
-                println!("using Neon");
                 self.new_raw_neon()
             }
         }?;
