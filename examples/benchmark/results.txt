@@ -1,0 +1,38 @@
+[csv crate] Processed 1000000000 rows
+[csv crate] Run 1: 103002 ms
+[csv crate] Processed 1000000000 rows
+[csv crate] Run 2: 103162 ms
+[csv crate] Processed 1000000000 rows
+[csv crate] Run 3: 103653 ms
+[csv crate] Average: 103272 ms (103.272 s)
+
+[csv-core] Processed 1000000000 rows
+[csv-core] Run 1: 65503 ms
+[csv-core] Processed 1000000000 rows
+[csv-core] Run 2: 68271 ms
+[csv-core] Processed 1000000000 rows
+[csv-core] Run 3: 66527 ms
+[csv-core] Average: 66767 ms (66.767 s)
+
+[Sync] Processed 1000000000 rows
+[csv_lib One Core] Run 1: 60051 ms
+[Sync] Processed 1000000000 rows
+[csv_lib One Core] Run 2: 58588 ms
+[Sync] Processed 1000000000 rows
+[csv_lib One Core] Run 3: 58251 ms
+[csv_lib One Core] Average: 58963 ms (58.963 s)
+
+[Multi-Core] Processed 0 rows
+[csv_lib Multi-Core] Run 1: 39241 ms
+[Multi-Core] Processed 0 rows
+[csv_lib Multi-Core] Run 2: 35056 ms
+[Multi-Core] Processed 0 rows
+[csv_lib Multi-Core] Run 3: 39513 ms
+[csv_lib Multi-Core] Average: 37936 ms (37.936 s)
+
+
+===== Benchmark Summary (avg over 3 runs) =====
+[csv crate]                 103272 ms  (103.272 s)
+[csv-core]                   66767 ms  (66.767 s)
+[csv_lib One Core]           58963 ms  (58.963 s)
+[csv_lib Multi-Core]         37936 ms  (37.936 s)

@@ -42,7 +42,7 @@ dependencies = [
 [[package]]
 name = "csv_lib"
 version = "1.0.0"
-source = "git+https://github.com/PTechSoftware/csv_lib.git?branch=v1.0.0#faf80205efe48d117199f327bda0c28c63015819"
+source = "git+https://github.com/PTechSoftware/csv_lib.git?branch=v1.0.0#9ca41758f8a8d2ba5b0a4eac9606e8ed9dc7e93b"
 dependencies = [
  "memchr",
  "memmap2",
