@@ -26,31 +26,43 @@ fn main() {
     config.delimiter = b',';
     
     //Csv file
-    let csv = match CsvReaderWithMap::open("E:\\data_1000000000.txt", &config ){
+    let csv = match CsvReaderWithMap::open("H:\\one_billion_rows\\target\\release\\data_1000000000.txt", &config ){
         Ok(r) => r,
         Err(e) => panic!("{}", e)
     };
     //Run Sync
-    let t=multicore_read(csv);
+    let t=one_core_read(csv);
     print!("Process in {} ms",t);
     print!("Process in {} s",t as f64 / 1000.0);
     
-    /*
-    [Sync] Processed 1.000.000.000 rows
-    Process in 81548 msProcess in 81.548 s
+    /*------------------------------------------------------------------------
+                            TIMES
+    --------------------------------------------------------------------------
+    Times are relative, change according chipset. Change in the same chipset 
+    according the load of your system, and other variables.
+    This are the times i`m getting in my pcs
+    --------------------------------------------------------------------------
+    [Sync] Processed 1.000.000.000 rows  
+    Process in 81548 msProcess in 81.548 s //i7 12650H  [Notebook]
+    Process in 68965 msProcess in 68.965 s //i9 12700 KF [Desktop]
+
     
     [Multi-Core] Processed 1.000.000.000 rows (Con lock())
-    Process in 217320 msProcess in 217.32 s
+    Process in 217320 msProcess in 217.32 s  //i7 12650H  [Notebook] 
+    Process in 146469 msProcess in 146.469 s //i9 12700 KF [Desktop]
+
     
     [Multi-Core] Processed 1.000.000.000 rows (Sin Lock)
-    Process in 52788 msProcess in 52.788 s
+    Process in 52788 msProcess in 52.788 s //i7 12650H  [Notebook] 
+    Process in 40537 msProcess in 40.537 s //i9 12700 KF [Desktop]
+
 
     */
 }
 
 /// Returns the milliseconds.
 #[allow(dead_code)]
-fn sync_read(mut csv: CsvReaderWithMap) -> u128 {
+fn one_core_read(mut csv: CsvReaderWithMap) -> u128 {
     let time = Instant::now();
     let mut ctr = 0usize;
     while let Some(row) = csv.next_raw() {
@@ -73,6 +85,8 @@ fn multicore_read(f: CsvReaderWithMap) -> u128 {
     let closure = |row: &mut RowParallel<'_>, _id_thread:usize, _target: Arc<Mutex<i32>>| {
         // Decode bytes as &str
         let _dec = Encoding::Windows1252.decode(row.get_row().get_slice());
+        let mut adq = _target.lock().unwrap();
+        *adq += 1;
     };
     //Execute parallel process
     parallel_processing_csv(

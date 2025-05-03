@@ -115,12 +115,8 @@ mod test {
             let next = row.peek_next();
             //Do some stuff
             // ...
-
-            //Acquire editable variable, and change it, for example at the final, to avoid locks
-            if next.is_empty() {
-                let mut lock = target.lock().unwrap();
-                *lock += 1;
-            }
+            let mut lock = target.lock().unwrap();
+            *lock += 1;
         };
         //Execute parallel process
         parallel_processing_csv(
