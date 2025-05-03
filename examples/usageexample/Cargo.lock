@@ -5,7 +5,7 @@ version = 4
 [[package]]
 name = "csv_lib"
 version = "1.0.0"
-source = "git+https://github.com/PTechSoftware/csv_lib.git?branch=v1.0.0#139caff91d2db83b26264f4905fd0459d07237c3"
+source = "git+https://github.com/PTechSoftware/csv_lib.git?branch=v1.0.0#ffbab91d1e17e3d0df1457a674620bce6385e2f6"
 dependencies = [
  "memchr",
  "memmap2",

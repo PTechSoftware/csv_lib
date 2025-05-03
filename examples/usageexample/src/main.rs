@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 use std::time::Instant;
 use csv_lib::csv::csv_reader::CsvReaderWithMap;
+use csv_lib::decoders::decoders::Encoding;
 use csv_lib::models::csv_config::CsvConfig;
 
 fn file() -> String{
@@ -24,14 +25,17 @@ fn main() {
         Ok(r) => r,
         Err(e) => panic!("{}", e)
     };
-    
+    //Run Sync
+    let t=sync_read(csv);
+    print!("Process in {} ms",t);
 }
 
 /// Returns the milliseconds.
 fn sync_read(mut csv: CsvReaderWithMap) -> u128 {
     let time = Instant::now();
     while let Some(mut row) = csv.next_raw() {
-        let fila = 
+        let fila = row.decode_line(Encoding::Windows1252);
+        let _ = fila.as_ref();
     }
     time.elapsed().as_millis()
 }
