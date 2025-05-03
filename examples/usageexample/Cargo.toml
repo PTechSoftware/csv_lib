@@ -4,3 +4,4 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+csv_lib = { git = "https://github.com/PTechSoftware/csv_lib.git" , branch = "v1.0.0"}

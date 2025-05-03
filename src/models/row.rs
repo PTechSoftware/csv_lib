@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+use crate::decoders::decoders::Encoding;
 use crate::helpers::bytes_helper::locate_line_break_memchr3;
 use crate::models::field::Field;
 #[cfg(target_arch = "x86_64")]
@@ -105,7 +107,11 @@ impl<'mmap> Row<'mmap> {
             None => Field::new_empty()
         }
     }
-    
+    /// ## Decodes the full line
+    /// - Must give the encoding.
+    pub fn decode_line(&mut self, enc: Encoding) -> Cow<str>{
+         enc.decode(self.slice)
+    }
     
     //------------------------------------------------------------//
     //--------------------- PRIVATE ------------------------------//
