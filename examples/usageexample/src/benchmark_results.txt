@@ -1,0 +1,9 @@
+[1746305258] OS: windows | Arch: x86_64 | Intel Core i9 12900 KF
+    File: H:\data_1000000000.txt
+    [Sync] Times: [58564, 58405, 59488]
+    [Sync] Average: 58819 ms (58.819 s)
+    [Multi-Core (Lock)] Times: [216323, 155589, 202946]
+    [Multi-Core (Lock)] Average: 191619 ms (191.619 s)
+    [Multi-Core] Times: [39465, 39636, 39642]
+    [Multi-Core] Average: 39581 ms (39.581 s)
+
