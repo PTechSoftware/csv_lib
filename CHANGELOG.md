@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 ---
+[1.0.1] - 2025-05-04
+
+- Removed string, cow, &str macros
+
+---
 ## [1.0.1] - 2025-05-04
 
 - Macro rule fixed
