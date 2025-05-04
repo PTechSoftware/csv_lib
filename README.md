@@ -93,7 +93,7 @@ rustflags = ["-C", "target-cpu=native"]
 We use [Row](https://github.com/PTechSoftware/csv_lib/blob/v1.0.0/docs/fields.md) and  [Field](https://github.com/PTechSoftware/csv_lib/blob/v1.0.0/docs/rows.md) struct, to handle the navigation in the document.
 
 - For a full example project check `examples` folder.
-
+- Check the macros [here](https://github.com/PTechSoftware/csv_lib/blob/v1.0.0/docs/macro.md)
 ### One Core Example:
 
 ```rust
