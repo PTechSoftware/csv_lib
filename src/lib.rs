@@ -49,6 +49,7 @@ mod test {
     use std::sync::{Arc, Mutex};
     use crate::csv::csv_reader::CsvReaderWithMap;
     use crate::decoders::decoders::Encoding;
+    use crate::{get_bool, get_f64, get_str};
     use crate::models::csv_config::CsvConfig;
     use crate::models::shared::Shared;
     use crate::parallel::parallel_reader::parallel_processing_csv;
@@ -79,7 +80,7 @@ mod test {
             let city = row.get_index(6 );
             // Decode bytes as &str
             let name = city.get_utf8_as_str();
-            
+            let _ = get_bool!(row,1);
             let num = city.get_i8();
             //Check and accumulate
             if !cities.contains(name){
@@ -118,6 +119,7 @@ mod test {
             let next = row.peek_next();
             //Do some stuff
             // ...
+            
             let mut lock = target.lock().unwrap();
             *lock += 1;
         };
