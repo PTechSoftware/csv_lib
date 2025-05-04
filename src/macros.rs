@@ -1,91 +1,92 @@
 #[macro_export]
 macro_rules! get_str {
     ($row:expr, $idx:expr) => {
-        $row.get_index($idx).get_utf8_as_str()
+        (&mut $row).get_index($idx).get_utf8_as_str()
     };
 }
+
 
 #[macro_export]
 macro_rules! get_cow {
     ($row:expr, $idx:expr, $enc:expr) => {
-        $row.get_index($idx).get_as_cow_decoded($enc)
+        (&mut $row).get_index($idx).get_as_cow_decoded($enc)
     };
 }
 
 #[macro_export]
 macro_rules! get_string {
     ($row:expr, $idx:expr, $enc:expr) => {
-        $row.get_index($idx).get_as_string($enc)
+        (&mut $row).get_index($idx).get_as_string($enc)
     };
 }
 
 #[macro_export]
 macro_rules! get_i8 {
     ($row:expr, $idx:expr) => {
-        $row.get_index($idx).get_i8()
+        (&mut $row).get_index($idx).get_i8()
     };
 }
 
 #[macro_export]
 macro_rules! get_u8 {
     ($row:expr, $idx:expr) => {
-        $row.get_index($idx).get_u8()
+        (&mut $row).get_index($idx).get_u8()
     };
 }
 
 #[macro_export]
 macro_rules! get_i16 {
     ($row:expr, $idx:expr) => {
-        $row.get_index($idx).get_i16()
+        (&mut $row).get_index($idx).get_i16()
     };
 }
 
 #[macro_export]
 macro_rules! get_u16 {
     ($row:expr, $idx:expr) => {
-        $row.get_index($idx).get_u16()
+        (&mut $row).get_index($idx).get_u16()
     };
 }
 
 #[macro_export]
 macro_rules! get_i32 {
     ($row:expr, $idx:expr) => {
-        $row.get_index($idx).get_i32()
+        (&mut $row).get_index($idx).get_i32()
     };
 }
 
 #[macro_export]
 macro_rules! get_u32 {
     ($row:expr, $idx:expr) => {
-        $row.get_index($idx).get_u32()
+        (&mut $row).get_index($idx).get_u32()
     };
 }
 
 #[macro_export]
 macro_rules! get_i64 {
     ($row:expr, $idx:expr) => {
-        $row.get_index($idx).get_i64()
+        (&mut $row).get_index($idx).get_i64()
     };
 }
 
 #[macro_export]
 macro_rules! get_u64 {
     ($row:expr, $idx:expr) => {
-        $row.get_index($idx).get_u64()
+        (&mut $row).get_index($idx).get_u64()
     };
 }
 
 #[macro_export]
 macro_rules! get_f32 {
     ($row:expr, $idx:expr) => {
-        $row.get_index($idx).get_f32()
+        (&mut $row).get_index($idx).get_f32()
     };
 }
 
 #[macro_export]
 macro_rules! get_f64 {
     ($row:expr, $idx:expr) => {
-        $row.get_index($idx).get_f64()
+        (&mut $row).get_index($idx).get_f64()
     };
 }
 

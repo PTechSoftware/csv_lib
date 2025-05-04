@@ -1,7 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 ---
+## [1.0.1] - 2025-05-04
 
+- Macro rule fixed
 
 ## [1.0.0] - 2025-05-02
 
