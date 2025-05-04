@@ -5,7 +5,8 @@ version = 4
 [[package]]
 name = "csv_lib"
 version = "1.0.0"
-source = "git+https://github.com/PTechSoftware/csv_lib.git?branch=v1.0.0#faf80205efe48d117199f327bda0c28c63015819"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "579934e5183166f7030772ea747ec3883c6ecbea0c924ed8308f9cb8758e4bf5"
 dependencies = [
  "memchr",
  "memmap2",

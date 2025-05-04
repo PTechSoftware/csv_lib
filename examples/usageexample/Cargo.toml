@@ -5,4 +5,4 @@ edition = "2024"
 
 #Other way of import the library
 [dependencies]
-csv_lib = "v1.0.0"
+csv_lib = "1.0.0"
