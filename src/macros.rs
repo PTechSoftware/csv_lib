@@ -1,24 +1,3 @@
-#[macro_export]
-macro_rules! get_str {
-    ($row:expr, $idx:expr) => {
-        (&mut $row).get_index($idx).get_utf8_as_str()
-    };
-}
-
-
-#[macro_export]
-macro_rules! get_cow {
-    ($row:expr, $idx:expr, $enc:expr) => {
-        (&mut $row).get_index($idx).get_as_cow_decoded($enc)
-    };
-}
-
-#[macro_export]
-macro_rules! get_string {
-    ($row:expr, $idx:expr, $enc:expr) => {
-        (&mut $row).get_index($idx).get_as_string($enc)
-    };
-}
 
 #[macro_export]
 macro_rules! get_i8 {
