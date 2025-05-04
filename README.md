@@ -1,4 +1,10 @@
-# 📚 Csv Lib 
+# 📚 Csv Lib v1.0.0
+[![Crates.io](https://img.shields.io/crates/v/csv_lib.svg)](https://crates.io/crates/csv_lib)
+[![Documentation](https://docs.rs/csv_lib/badge.svg)](https://docs.rs/csv_lib)
+[![License](https://img.shields.io/crates/l/csv_lib.svg)](https://github.com/PTechSoftware/csv_lib/blob/main/LICENSE)
+
+
+
 
 ----
 
@@ -87,6 +93,7 @@ In your project folder, at the same level src create a .cargo/config.toml file w
 [build]
 rustflags = ["-C", "target-cpu=native"]
 ```
+---- 
 
 ## Usage:
 
@@ -172,6 +179,9 @@ pub fn main(){
     println!("Iterated Lines: {}", shared.lock())
 }
 ```
+
+----
+
 # 📊 CSV Parsing Benchmark Results between different functions of the library 
 
 - **Full line decoding:** If you decode only needed fields performance will be better.
@@ -215,7 +225,7 @@ Check it [here](CHANGELOG.md)
 
 ## 🏆 Author
 
-Made by **Ignacio Pérez Panizza**  🇺🇾 🧉
+Made by **Ignacio Pérez Panizza**  🇺🇾  🧉
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue)](https://www.linkedin.com/in/ignacio-p%C3%A9rez-panizza-322844165/)
 
