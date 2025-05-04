@@ -17,9 +17,6 @@ This macro collection provides efficient and readable access to `Field<'mmap>` v
 
 | Macro                   | Return Type            | Requires `Encoding` | Description                                     |
 |-------------------------|------------------------|----------------------|-------------------------------------------------|
-| `get_str!(row, i)`      | `&str`                 | ❌                   | Decodes field as UTF-8 string                   |
-| `get_cow!(row, i, enc)` | `Cow<str>`             | ✅                   | Decodes using the given encoding                |
-| `get_string!(row, i, enc)` | `String`            | ✅                   | Allocates and returns a string from the field   |
 | `get_i8!(row, i)`       | `i8`                   | ❌                   | Parses as signed 8-bit integer                  |
 | `get_u8!(row, i)`       | `u8`                   | ❌                   | Parses as unsigned 8-bit integer                |
 | `get_i16!(row, i)`      | `i16`                  | ❌                   | Parses as signed 16-bit integer                 |
@@ -40,13 +37,9 @@ This macro collection provides efficient and readable access to `Field<'mmap>` v
 ## 💡 Usage Example
 
 ```rust
-let name = get_str!(row, 0);
 let age = get_i8!(row, 1);
 let balance = get_f64!(row, 2);
 let active = get_bool!(row, 3);
-
-let cow_name = get_cow!(row, 0, Encoding::Utf8);
-let name_string = get_string!(row, 0, Encoding::Utf8);
 
 if is_numeric_like!(row, 2) {
     println!("Looks like a numeric value!");
