@@ -5,6 +5,8 @@ use std::arch::x86_64::*;
 #[cfg(target_arch = "aarch64")]
 #[allow(unused)]
 use std::arch::aarch64::*;
+#[cfg(target_arch = "aarch64")]
+use std::arch::is_aarch64_feature_detected;
 
 /// Scalar UTF-8 decoding.
 /// Panics if invalid UTF-8 (you can change to '�' fallback if needed).
@@ -42,7 +44,7 @@ pub fn decode_utf8(input: &[u8]) -> Cow<'_, str> {
     }
     #[cfg(target_arch = "aarch64")]
     {
-        if std::is_aarch64_feature_detected!("neon") {
+        if is_aarch64_feature_detected!("neon") {
             return decode_utf8_neon(input);
         }
     }
@@ -82,7 +84,7 @@ mod tests {
             }
             #[cfg(target_arch = "aarch64")]
             {
-                if std::is_aarch64_feature_detected!("neon") {
+                if is_aarch64_feature_detected!("neon") {
                     decode_utf8_neon(VALID_UTF8)
                 } else {
                     decode_utf8_scalar(VALID_UTF8)

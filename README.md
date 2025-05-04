@@ -1,6 +1,9 @@
-# 📚 Csv Lib
+# 📚 Csv Lib 
+
+----
 
 A high-performance, zero-copy CSV reader for Rust, optimized for extremely fast parsing using:
+- 🔥[ New ] **Supports multithread complete Row process with a clousure,and a editable shared object**
 - **Memory-mapped files** (`memmap2`)
 - **SIMD acceleration** (AVX2 on x86_64, NEON on aarch64)
 - **memchr3 fallback** for broad CPU compatibility
@@ -20,19 +23,11 @@ A high-performance, zero-copy CSV reader for Rust, optimized for extremely fast 
 - 🚀 Support for column type mapping or auto-detection
 - 🚀 Optional FFI export for C, C++, Python, C#, and Java between other options
 - 🚀 Safe cursor management
-- 🚀 UTF-8, Windows1252 and custom encoding support (`encoding_rs`)
-
----
+- 🚀 UTF-8, Windows1252 and custom encoding support
 
 ## ⚙️ Installation
 
-Add this to your `Cargo.toml`:
-
-```toml
-[dependencies]
-csv_lib = "0.1"
-```
-or you can use cargo directly:
+Put in your terminal
 
 ```bash 
 cargo add csv_lib
@@ -40,147 +35,112 @@ cargo add csv_lib
 
 If you also want FFI support:
 
-```toml
-[dependencies]
-csv_lib = { version = "0.1", features = ["ffi"] }
-```
-or you can use cargo directly:
-
 ```bash
 cargo add csv_lib --features ffi
 ```
-
 ---
+## Usage:
 
-## 🛠️ Basic Usage
+We use [Row](https://github.com/PTechSoftware/csv_lib/blob/v1.0.0/docs/fields.md) and  [Field](https://github.com/PTechSoftware/csv_lib/blob/v1.0.0/docs/rows.md) struct, to handle the navigation in the document.
 
-### Reading rows and fields from a CSV. I strongly recommend check Advanced Usage, in this guide
+- For a full example project check `examples` folder.
+
+### One Core Example:
 
 ```rust
-use csv_lib::{CsvReaderWithMap, CsvConfig};
-
-fn main() {
-    // Create configuration
-    let cfg = CsvConfig::default();
-
-    // Open CSV file
-    let mut reader = CsvReaderWithMap::open("data.csv", &cfg).expect("Failed to open file");
-
-    // Process rows
-    while let Some(raw_row) = reader.next_raw() {
-        let mut iter = raw_row.get_iterator(&cfg);
-
-        while let Some(field) = iter.next() {
-            println!("Field: {:?}", std::str::from_utf8(field).unwrap());
-        }
-    }
-}
-```
-
----
-
-## 📋 CsvConfig
-
-The `CsvConfig` structure allows full customization of CSV parsing.
-
-```rust
-let config = CsvConfig::new(
-    b',',                  // delimiter
-    b'"',                  // string separator (0u8 disables escaping)
-    b'\n',                 // line break
-    WINDOWS_1252,          // encoding
-    Vec::new(),            // optional column type map
-    false,                 // force memchr3 fallback
-);
-```
-
-Configurable options:
-
-| Field | Description |
-|:------|:------------|
-| `delimiter` | Field separator character (e.g., `b','`) |
-| `string_separator` | Field quoting character (e.g., `b'"'`) |
-| `line_break` | Line terminator character (e.g., `b'\n'`) |
-| `encoder` | Character encoding (`encoding_rs`) |
-| `type_map` | Optional mapping of columns to `DataType` |
-| `force_memcach3` | Force fallback to memchr3 |
-
----
-
-## 🔥 Advanced Usage: 
-
-
-### Field Parsing with AutoDetect, And DataTypes
-
-```rust
-fn read_csv() {
+pub fn main(){
     //Create Config
     let cfg = CsvConfig::new(
         b',',
         0u8,
         b'\n',
-        encoding_rs::WINDOWS_1252,
-        Vec::new(),
-        false,
+        Encoding::Windows1252,
+        false
     );
     //Open the file
-    let mut f = match CsvReaderWithMap::open("data.1.csv", &cfg) {
+    let f = match CsvReaderWithMap::open("data.csv", &cfg) {
         Ok(f) => f,
-        Err(e) => panic!("{}", e) //Here is A CsvError struct
+        Err(e) => panic!("{}", e)
     };
-    // Process Lines (As you can observe, you can pass differents config on each stage, to improve customization)
-    while let Some(raw_row) = f.next_raw() {
-        //Get InRowIter struct
-        let mut iter = raw_row.get_iterator(&cfg);
-        //Create a string for demostration
-        let mut rr_str = String::new();
-        //Iter between rows
-        while let Some(row) = iter.next() {
-            //Count row fields
-            let fields_count = iter.count_fields(cfg.delimiter, cfg.string_separator);
-            println!("Fields count: {}", fields_count);
-            //Extract desired field
-            if let Some(field_0) = iter.get_field_index(0){
-                //Get field 0, Id as number
-                rr_str.push_str(&format!("{},", field_0.get_as_data(&cfg,DataType::Integer)));
-            }
-            //Detect the other fields
-            let data = row.get_as_data_autodetect(&cfg);
-            //You can aggregate field, due fmt::Display is already implemented
-            rr_str.push_str(&format!("{},", data));
+    // We extract different' s country's of the dataset :
+    // For example:
+    //Create a Hash Acumulator
+    let mut cities :HashSet<String>= HashSet::with_capacity(195);
+    //Iter over rows
+    while let Some(mut row) = f.next_raw() {
+        //Extract Field index 6 starting on 0
+        let city = row.get_index(6 );
+        // Decode bytes as &str
+        let name = city.get_utf8_as_str();
+        //Check and accumulate
+        if !cities.contains(name){
+            cities.insert(name.to_string());
         }
-        println!("{}", rr_str);
     }
 }
 ```
 
-
----
-
-## 🚀 `InRowIter` Overview
-
-`InRowIter` is a **zero-copy iterator** over fields inside a row:
+### Multicore Example:
 
 ```rust
-let row = b"field1;field2;\"field;with;delimiter\";field4";
+pub fn main(){
+    //Create Config
+    let cfg = CsvConfig::new(
+        b',',
+        0u8,
+        b'\n',
+        Encoding::Windows1252,
+        false
+    );
+    //Open the file
+    let f = match CsvReaderWithMap::open("data.csv", &cfg) {
+        Ok(f) => f,
+        Err(e) => panic!("{}", e)
+    };
 
-let mut iter = InRowIter::new(row, b';', b'"');
-
-while let Some(field) = iter.next() {
-    println!("{:?}", std::str::from_utf8(field).unwrap());
+    //Get Slice Reference
+    let data = f.get_slice();
+    //Create a shared counter
+    let shared = Shared::<i32>::default();
+    //Create de clousere executed on each thread (the ARC Mutex type must be the same as Shared)
+    let closure = |_: &mut Row<'_>, target: Arc<Mutex<i32>>| {
+        //Do some stuff
+        // ...
+        //Access editable variable.(Use after process due it blocks). Omit this lock uf you can.
+        let mut lock = target.lock().unwrap();
+        *lock += 1;
+    };
+    //Execute parallel process
+    parallel_processing_csv(
+        data,
+        b'\n',
+        b',',
+        0u8,
+        false,
+        closure,
+        shared.arc(),
+    );
+    println!("Iterated Lines: {}", shared.lock())
 }
 ```
+# 📊 CSV Parsing Benchmark Results between different functions of the library 
 
-## 🚀 Features:
+- **Full line decoding:** If you decode only needed fields performance will be better.
+- **File Size:** `data_1000000000.txt` (approx. 14GB)  
+- **Test Metric:** Time in milliseconds (ms) — lower is better
 
-| 🚀 Feature                     | 📜 Description                                                                                   |
-|:-------------------------------|:-------------------------------------------------------------------------------------------------|
-| 🔢 Field retrieval by index     | Access any field directly using its column index. if extraction ir raw it dont allocates nothing |
-| 🧩 String separator handling    | Correctly processes fields enclosed with separators.                                             |
-| 📝 Escaped quote support        | Parses embedded quotes inside quoted fields (`""` → `"`).                                        |
-| ⚡ Efficient field counting     | Counts the number of fields in a row without allocation.                                         |
+| OS | Arch    | CPU/Chipset              | Type       | Sync Avg       | Multi-Core (Lock) Avg | Multi-Core Avg    |
+|-|---------|---------------------------|------------|----------------|------------------------|-------------------|
+| Windows | x86_64  | i9-12900KF [Desktop]      | Execution  | 58,819 ms (58.82 s) | 191,619 ms (191.62 s)  | 39,581 ms (39.58 s) |
+| Windows | x86_64  | i7-12650H [Notebook]      | Execution  | 77,463 ms (77.46 s) | 216,394 ms (216.39 s)  | 52,459 ms (52.46 s) |
+| macOS   | aarch64 | Apple M2 2022 [Notebook]  | Execution  | 76,337 ms (76.34 s) | 120,968 ms (120.97 s)  | 73,739 ms (73.74 s) |
 
 ---
+## Changelog
+Check it [here](CHANGELOG.md)
+
+----
+
 
 ## 📈 Performance Tips
 
@@ -193,29 +153,20 @@ while let Some(field) = iter.next() {
 
 ---
 
-## 🚧 Next Version
-
-- Working to implent AVX512 to the lib, which can handle a larger vector. 
-This feature will be a module feature , due is not compatible with common targets, and is unstable in some Alder Laker (12th Gen Intel) processors.
-- Planned adding parallel processing
-- Planned add async feature
-
-
-
 ## 🔗 Useful Links
 
 **The reached performance was possible due this 3 crates**
 
 - [Rust memmap2 crate](https://docs.rs/memmap2/latest/memmap2/)
 - [memchr crate (SIMD optimized)](https://docs.rs/memchr/latest/memchr/)
-- [encoding_rs crate](https://docs.rs/encoding_rs/latest/encoding_rs/)
+- [num_cpus](https://docs.rs/num_cpus/latest/num_cpus/)
 ---
 
 
 
 ## 🏆 Author
 
-Made with passion by **Ignacio Pérez Panizza**  🇺🇾 🧉
+Made by **Ignacio Pérez Panizza**  🇺🇾 🧉
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue)](https://www.linkedin.com/in/ignacio-p%C3%A9rez-panizza-322844165/)
 

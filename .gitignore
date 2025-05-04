@@ -6,3 +6,6 @@
 /data_mock.csv
 /flamegraph.svg
 /out.stacks
+/examples/benchmark/target/
+/examples/usageexample/target/
+/examples/cfg_detection/target/

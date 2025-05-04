@@ -3,12 +3,17 @@ All notable changes to this project will be documented in this file.
 ---
 
 
-## [1.0.0] - 2025-04-28
+## [1.0.0] - 2025-05-02
 
 ### Added
 - Encoding support without `encoding_rs` crate. Changes `ConfigCsv` .
 - Added functions to fields in `src/extensions/field_extension.rs` to compare strings as bytes.
 - Added function to encode.
+- Added `Row`, and `Field` structs, to improve code facility
+- Added function to process in parallel the file.
+- Added more detailed documentation
+- Added examples.
+  
 
 ### Changed
 - Functions under `src/helpers/byte_helper.rs` changed access modifier to `pub(crate)`.
@@ -16,8 +21,9 @@ All notable changes to this project will be documented in this file.
 ---
 
 ### Removed
-
+- Removed `avx512f` planned support. Require Rust nightly channel.
 - Removed `encoding_rs` dependency from `Cargo.toml`.
+- Removed `DataTypes` and `Data` (replaced by functions inside `Row` struct)
 ---
 
 ## [0.1.0] - 2025-04-28

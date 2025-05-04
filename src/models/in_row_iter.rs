@@ -1,26 +1,39 @@
 use memchr::{memchr, memchr2};
 
-
 /// ## Struct InRowIter
 /// - An struct, used to help int the row processing.
+#[derive(Debug)]
 pub struct InRowIter<'a> {
     line: &'a [u8],
-    delimiter: u8,
+    field_separator: u8,
     string_separator: u8,
     cursor: usize,
 }
 
-impl<'a> InRowIter<'a> {
+impl<'mmap> InRowIter<'mmap> {
     #[inline(always)]
     /// Creates a new instance of the struct `InRowIter<'a>`
-    pub fn new(line: &'a [u8], delimiter: u8, string_separator: u8) -> Self {
+    pub fn new(line: &'mmap [u8], field_separator: u8, string_separator: u8) -> Self {
         Self {
             line,
-            delimiter,
+            field_separator,
             string_separator,
             cursor: 0,
         }
     }
+    #[inline(always)]
+    /// ## Inner library Cursor Setter
+    /// - Set a new value for the cursor.
+    pub(crate) fn set_cursor(&mut self, new_index :usize){
+        self.cursor = new_index;
+    }
+    
+    #[inline(always)]
+    /// ## Inner library Cursor Getter
+    /// - Gets the current value of the cursor
+    pub(crate) fn get_cursor(&self) -> usize { self.cursor }
+    
+    
     #[inline(always)]
     /// Count the number of fields, that a line haves.
     pub fn count_fields(&self, delimiter: u8, string_separator: u8) -> usize {
@@ -59,19 +72,28 @@ impl<'a> InRowIter<'a> {
     }
     #[inline(always)]
     /// Extract the content of a field in raw format.
-    pub fn get_field_index(&mut self, mut target: usize) -> Option<&'a [u8]> {
-        while let Some(field) = self.next() {
-            if target == 0 {
-                return Some(field);
+    pub fn get_field_index(&mut self, target: usize) -> Option<&'mmap [u8]> {
+        let mut count = 0;
+        //Store the cursor
+        let actual = self.get_cursor();
+        //Put the cursor at the beginning
+        self.set_cursor(0_usize);
+        while let Some(el) = self.next(){
+            if count == target {
+                //restore cursor
+                self.set_cursor(actual);
+                return Some(el);
             }
-            target -= 1;
+            count = count + 1;
         }
+        //restore cursor
+        self.set_cursor(actual);
         None
     }
 }
 
-impl<'a> Iterator for InRowIter<'a> {
-    type Item = &'a [u8];
+impl<'mmap> Iterator for InRowIter<'mmap> {
+    type Item = &'mmap [u8];
     #[inline(always)]
     fn next(&mut self) -> Option<Self::Item> {
         if self.cursor >= self.line.len() {
@@ -115,7 +137,7 @@ impl<'a> Iterator for InRowIter<'a> {
                 }
             }
 
-            if byte == self.delimiter && !in_string {
+            if byte == self.field_separator && !in_string {
                 let field = &slice[start_offset..pos - end_offset];
                 self.cursor += pos + 1;
                 return Some(field);
@@ -128,5 +150,29 @@ impl<'a> Iterator for InRowIter<'a> {
         let field = &slice[start_offset..slice.len() - end_offset];
         self.cursor = self.line.len();
         Some(field)
+    }
+}
+
+
+
+
+#[cfg(test)]
+mod tests {
+    use crate::decoders::decoders::Encoding::Windows1252;
+    use crate::models::in_row_iter::InRowIter;
+
+    #[test]
+    fn test_iter_next(){
+
+        let csv_data = b"uno;dos;3;cuatro;cinco;6;siete;ocho;9";
+        let mut row = InRowIter::new(csv_data, b';', 0u8);
+
+  
+        let f = row.get_field_index(2).unwrap();
+
+        let dec = Windows1252.decode(f);
+        println!("Field Data: {}",  dec.as_ref());
+        
+        
     }
 }

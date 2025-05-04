@@ -6,6 +6,8 @@ use std::arch::x86_64::*;
 #[cfg(target_arch = "aarch64")]
 #[allow(unused)]
 use std::arch::aarch64::*;
+#[cfg(target_arch = "aarch64")]
+use std::arch::is_aarch64_feature_detected;
 
 /// Latin2 (ISO-8859-2) Scalar Decoder.
 /// Maps each byte to its Unicode equivalent.
@@ -58,7 +60,7 @@ pub fn decode_latin2(input: &[u8]) -> Cow<'_, str> {
     }
     #[cfg(target_arch = "aarch64")]
     {
-        if std::is_aarch64_feature_detected!("neon") {
+        if is_aarch64_feature_detected!("neon") {
             return decode_latin2_neon(input);
         }
     }
@@ -97,7 +99,7 @@ mod tests {
             }
             #[cfg(target_arch = "aarch64")]
             {
-                if std::is_aarch64_feature_detected!("neon") {
+                if is_aarch64_feature_detected!("neon") {
                     decode_latin2_neon(VALID_LATIN2)
                 } else {
                     decode_latin2_scalar(VALID_LATIN2)

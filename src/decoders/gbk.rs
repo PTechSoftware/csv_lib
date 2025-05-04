@@ -6,6 +6,8 @@ use std::arch::x86_64::*;
 #[cfg(target_arch = "aarch64")]
 #[allow(unused)]
 use std::arch::aarch64::*;
+#[cfg(target_arch = "aarch64")]
+use std::arch::is_aarch64_feature_detected;
 
 /// Scalar GBK decoder (basic version).
 /// ASCII passed through, double-byte sequences replaced with placeholder for now.
@@ -57,7 +59,7 @@ pub fn decode_gbk(input: &[u8]) -> Cow<'_, str> {
     }
     #[cfg(target_arch = "aarch64")]
     {
-        if std::is_aarch64_feature_detected!("neon") {
+        if is_aarch64_feature_detected!("neon") {
             return decode_gbk_neon(input);
         }
     }
@@ -96,7 +98,7 @@ mod tests {
             }
             #[cfg(target_arch = "aarch64")]
             {
-                if std::is_aarch64_feature_detected!("neon") {
+                if is_aarch64_feature_detected!("neon") {
                     decode_gbk_neon(VALID_ASCII)
                 } else {
                     decode_gbk_scalar(VALID_ASCII)
