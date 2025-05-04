@@ -24,6 +24,47 @@ A high-performance, zero-copy CSV reader for Rust, optimized for extremely fast 
 - 🚀 Optional FFI export for C, C++, Python, C#, and Java between other options
 - 🚀 Safe cursor management
 - 🚀 UTF-8, Windows1252 and custom encoding support
+----
+# 📊 Performance Benchmark – `csv_lib` Rust Library vs other libraries
+
+We benchmarked the performance of processing **1,000,000,000 CSV rows** using several popular Rust libraries.
+Each result is averaged over 3 independent runs.
+The test is get &str of each line. 
+In this library we NOT decode the fields, untile you ask for it un the struct field get value, we just get the bytes of the line.
+For this example we decoded the full row, which is not so efficient.
+
+| 🧪 Implementation          | 🧵 CPU Usage      | ⏱️ Average Time     |
+|----------------------------|------------------|---------------------|
+| `csv` crate                | Single-core      | 103.272 s           |
+| `csv-core` crate           | Single-core      | 66.767 s            |
+| `csv_lib` (sync mode)      | Single-core      | 58.963 s ✅          |
+| `csv_lib` (parallel mode)  | Multi-core (full) | **37.936 s 🏆**     |
+
+---
+
+## 🔥 Why Choose `csv_lib`?
+
+- ✅ **Faster** than `csv` and `csv-core` even in single-threaded mode.
+- 🧵 **True parallelism**: multi-core support with chunked processing and low synchronization overhead.
+- 🚀 Built on `memmap2` and SIMD (`AVX2` / `NEON`) for fast parsing directly from memory.
+- 🧠 **Configurable closures** for per-line processing and custom splitting logic.
+- 📁 Capable of handling files **larger than 13 GB** without memory bottlenecks.
+
+---
+
+## 📦 Best Suited For
+
+- Massive CSV file ingestion (ETL, logs, data lakes)
+- High-performance backend pipelines
+- Lightweight embedded CLI applications with zero-copy data access
+
+---
+
+> 💡 `csv_lib` is optimized for **sequential**, **chunked**, and **parallel processing** using memory-mapped I/O and customizable parsing logic.
+
+---
+
+
 
 ## ⚙️ Installation
 
@@ -39,6 +80,14 @@ If you also want FFI support:
 cargo add csv_lib --features ffi
 ```
 ---
+
+In your project folder, at the same level src create a .cargo/config.toml file with the following content:
+
+```toml
+[build]
+rustflags = ["-C", "target-cpu=native"]
+```
+
 ## Usage:
 
 We use [Row](https://github.com/PTechSoftware/csv_lib/blob/v1.0.0/docs/fields.md) and  [Field](https://github.com/PTechSoftware/csv_lib/blob/v1.0.0/docs/rows.md) struct, to handle the navigation in the document.

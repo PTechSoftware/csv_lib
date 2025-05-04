@@ -41,6 +41,7 @@ pub mod features;
 pub mod decoders;
 pub mod encoders;
 pub mod parallel;
+pub mod macros;
 
 #[cfg(test)]
 mod test {
@@ -78,6 +79,8 @@ mod test {
             let city = row.get_index(6 );
             // Decode bytes as &str
             let name = city.get_utf8_as_str();
+            
+            let num = city.get_i8();
             //Check and accumulate
             if !cities.contains(name){
                 cities.insert(name.to_string());
