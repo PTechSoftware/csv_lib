@@ -1,4 +1,4 @@
-# 📚 Csv Lib v1.0.1
+# 📚 Csv Lib v1.0.2
 [![Crates.io](https://img.shields.io/crates/v/csv_lib.svg)](https://crates.io/crates/csv_lib)
 [![Documentation](https://docs.rs/csv_lib/badge.svg)](https://docs.rs/csv_lib)
 [![License](https://img.shields.io/crates/l/csv_lib.svg)](https://github.com/PTechSoftware/csv_lib/blob/main/LICENSE)
