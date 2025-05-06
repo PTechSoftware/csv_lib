@@ -21,14 +21,17 @@ pub struct CsvReaderWithMap {
 }
 
 impl CsvReaderWithMap {
+    /// ## Get Config
+    /// - Extracts configuration reference
     pub fn get_config(&self) -> &CsvConfig {
         &self.config
     }
 
+    /// ## Get Slice
+    /// - Extracts the slice reference
     pub fn get_slice(&self) -> &[u8] {
         &self.mmap[..]
     }
-
 
     /// ## Open
     /// - Sync execution.

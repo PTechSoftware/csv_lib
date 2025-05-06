@@ -6,3 +6,4 @@ pub mod row;
 pub mod field;
 pub mod shared;
 pub mod worker;
+mod editable_persist;
