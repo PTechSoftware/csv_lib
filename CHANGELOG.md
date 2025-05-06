@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 [1.0.4] 2025-05-06
 
 - Fixed get_string Macro
-- Added peek/ advance in readers
+- Added peek/ advance in readers [Not mutable]
 
 
 ---
