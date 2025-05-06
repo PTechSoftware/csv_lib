@@ -27,13 +27,10 @@ impl<'mmap> InRowIter<'mmap> {
     pub(crate) fn set_cursor(&mut self, new_index :usize){
         self.cursor = new_index;
     }
-    
     #[inline(always)]
     /// ## Inner library Cursor Getter
     /// - Gets the current value of the cursor
     pub(crate) fn get_cursor(&self) -> usize { self.cursor }
-    
-    
     #[inline(always)]
     /// Count the number of fields, that a line haves.
     pub fn count_fields(&self, delimiter: u8, string_separator: u8) -> usize {
@@ -90,6 +87,60 @@ impl<'mmap> InRowIter<'mmap> {
         self.set_cursor(actual);
         None
     }
+    
+    /// ## Peek Field At Position
+    /// - Returns the next field starting from the given cursor without modifying the internal cursor.
+    #[inline(always)]
+    pub fn peek_field_at(&self, from: usize) -> Option<&'mmap [u8]> {
+        if from >= self.line.len() {
+            return None;
+        }
+
+        let slice = &self.line[from..];
+        let mut pos = 0usize;
+        let mut in_string = false;
+        let check_string = self.string_separator != 0;
+        let mut start_offset = 0;
+        let mut end_offset = 0;
+
+        if check_string && !slice.is_empty() && slice[0] == self.string_separator {
+            in_string = true;
+            pos = 1;
+            start_offset = 1;
+        }
+
+        while pos < slice.len() {
+            let byte = slice[pos];
+
+            if check_string && byte == self.string_separator {
+                if in_string {
+                    if pos + 1 < slice.len() && slice[pos + 1] == self.string_separator {
+                        pos += 2;
+                        continue;
+                    } else {
+                        in_string = false;
+                        end_offset = 1;
+                        pos += 1;
+                        continue;
+                    }
+                } else {
+                    pos += 1;
+                    continue;
+                }
+            }
+
+            if byte == self.field_separator && !in_string {
+                let field = &slice[start_offset..pos - end_offset];
+                return Some(field);
+            }
+
+            pos += 1;
+        }
+
+        let field = &slice[start_offset..slice.len() - end_offset];
+        Some(field)
+    }
+
 }
 
 impl<'mmap> Iterator for InRowIter<'mmap> {

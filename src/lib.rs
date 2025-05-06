@@ -51,6 +51,7 @@ mod test {
     use crate::decoders::decoders::Encoding;
     use crate::{get_bool, get_f64, get_str};
     use crate::models::csv_config::CsvConfig;
+    use crate::models::row::Row;
     use crate::models::shared::Shared;
     use crate::parallel::parallel_reader::parallel_processing_csv;
     use crate::parallel::row_parallel::RowParallel;
@@ -74,6 +75,9 @@ mod test {
         // For example:
         //Create a Hash Acumulator
         let mut cities :HashSet<String>= HashSet::with_capacity(195);
+
+
+        let mut rows :Vec<&Row> = Vec::with_capacity(24);
         //Iter over rows
         while let Some(mut row) = f.next_raw() {
             //Extract Field index 6 starting on 0
@@ -81,6 +85,11 @@ mod test {
             // Decode bytes as &str
             let name = city.get_utf8_as_str();
             let _ = get_bool!(row,1);
+            rows.push(&row);
+
+
+
+
             let num = city.get_i8();
             //Check and accumulate
             if !cities.contains(name){

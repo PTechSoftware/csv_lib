@@ -100,8 +100,8 @@ impl<'mmap> Row<'mmap> {
     /// # Get Field by Index
     /// - Receives an usize (zero based index), and returns the field associated to the iteration.
     /// #### `returns`: An Option<Field<'mmap>>
-    pub fn get_index(&mut self, index: usize) -> Field<'mmap> {
-        let data = &self.iter.get_field_index(index);
+    pub fn get_index(&self, index: usize) -> Field<'mmap> {
+        let data = &self.iter.peek_field_at(index);
         match data {
             Some(f) => Field::new(f),
             None => Field::new_empty()

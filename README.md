@@ -1,4 +1,4 @@
-# 📚 Csv Lib v1.0.2
+# 📚 Csv Lib v1.0.3
 [![Crates.io](https://img.shields.io/crates/v/csv_lib.svg)](https://crates.io/crates/csv_lib)
 [![Documentation](https://docs.rs/csv_lib/badge.svg)](https://docs.rs/csv_lib)
 [![License](https://img.shields.io/crates/l/csv_lib.svg)](https://github.com/PTechSoftware/csv_lib/blob/main/LICENSE)
@@ -159,7 +159,7 @@ pub fn main(){
     //Create a shared counter
     let shared = Shared::<i32>::default();
     //Create de clousere executed on each thread (the ARC Mutex type must be the same as Shared)
-    let closure = |_: &mut Row<'_>, target: Arc<Mutex<i32>>| {
+    let closure = |_: &mut RowParallel<'_>, target: Arc<Mutex<i32>>| {
         //Do some stuff
         // ...
         //Access editable variable.(Use after process due it blocks). Omit this lock uf you can.
