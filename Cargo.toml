@@ -2,7 +2,7 @@
 name = "csv_lib"
 build = "build.rs"
 version = "1.0.3"
-edition = "2024"
+edition = "2018"
 authors = ["Ignacio Perez Panizza <ptechsoftware.correo@gmail.com>"]
 description = "Library for parsing CSV files using memory-mapped I/O, with low alloc, and AVX2/NEON support"
 license = "MIT"
