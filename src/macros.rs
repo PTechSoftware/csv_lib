@@ -4,7 +4,7 @@
 #[macro_export]
 macro_rules! get_i8 {
     ($row:expr, $idx:expr) => {
-        (&mut $row).get_index($idx).get_i8()
+        $row.get_index($idx).get_i8()
     };
 }
 
@@ -14,7 +14,7 @@ macro_rules! get_i8 {
 #[macro_export]
 macro_rules! get_u8 {
     ($row:expr, $idx:expr) => {
-        (&mut $row).get_index($idx).get_u8()
+        $row.get_index($idx).get_u8()
     };
 }
 
@@ -24,7 +24,7 @@ macro_rules! get_u8 {
 #[macro_export]
 macro_rules! get_i16 {
     ($row:expr, $idx:expr) => {
-        (&mut $row).get_index($idx).get_i16()
+        $row.get_index($idx).get_i16()
     };
 }
 
@@ -34,7 +34,7 @@ macro_rules! get_i16 {
 #[macro_export]
 macro_rules! get_u16 {
     ($row:expr, $idx:expr) => {
-        (&mut $row).get_index($idx).get_u16()
+        $row.get_index($idx).get_u16()
     };
 }
 
@@ -44,7 +44,7 @@ macro_rules! get_u16 {
 #[macro_export]
 macro_rules! get_i32 {
     ($row:expr, $idx:expr) => {
-        (&mut $row).get_index($idx).get_i32()
+        $row.get_index($idx).get_i32()
     };
 }
 
@@ -54,7 +54,7 @@ macro_rules! get_i32 {
 #[macro_export]
 macro_rules! get_u32 {
     ($row:expr, $idx:expr) => {
-        (&mut $row).get_index($idx).get_u32()
+        $row.get_index($idx).get_u32()
     };
 }
 
@@ -64,7 +64,7 @@ macro_rules! get_u32 {
 #[macro_export]
 macro_rules! get_i64 {
     ($row:expr, $idx:expr) => {
-        (&mut $row).get_index($idx).get_i64()
+        $row.get_index($idx).get_i64()
     };
 }
 
@@ -74,7 +74,7 @@ macro_rules! get_i64 {
 #[macro_export]
 macro_rules! get_u64 {
     ($row:expr, $idx:expr) => {
-        (&mut $row).get_index($idx).get_u64()
+        $row.get_index($idx).get_u64()
     };
 }
 
@@ -84,7 +84,7 @@ macro_rules! get_u64 {
 #[macro_export]
 macro_rules! get_f32 {
     ($row:expr, $idx:expr) => {
-        (&mut $row).get_index($idx).get_f32()
+        $row.get_index($idx).get_f32()
     };
 }
 
@@ -94,7 +94,7 @@ macro_rules! get_f32 {
 #[macro_export]
 macro_rules! get_f64 {
     ($row:expr, $idx:expr) => {
-        (&mut $row).get_index($idx).get_f64()
+        $row.get_index($idx).get_f64()
     };
 }
 

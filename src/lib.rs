@@ -49,7 +49,7 @@ mod test {
     use std::sync::{Arc, Mutex};
     use crate::csv::csv_reader::CsvReaderWithMap;
     use crate::decoders::decoders::Encoding;
-    use crate::{get_bool, get_f64};
+    use crate::{get_bool, get_f64, get_i32};
     use crate::models::csv_config::CsvConfig;
     use crate::models::row::Row;
     use crate::models::shared::Shared;
@@ -85,7 +85,7 @@ mod test {
             let name = city.get_utf8_as_str();
             let _ = get_bool!(row,1);
             let num = city.get_i8();
-
+            let i = get_i32!(row,2);
 
             let city = row.get_index(6 ).get_as_cow_decoded(Encoding::Windows1252).as_ref();
             let city = row.get_index(7 ).get_utf8_as_str();
