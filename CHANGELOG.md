@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 ---
+[1.0.4] 2025-05-06
+
+- Fixed get_string Macro
+- Added peek/ advance in readers
+
+
+---
 [1.0.3] - 2025-05-05
 
 - Added CsvReader from Slice, where you dont depend on mmap.
