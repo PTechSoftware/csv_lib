@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 
 - Added CsvReader from Slice, where you dont depend on mmap.
 - Added mutable param to use inside worker.Util to avoid locking
+- Changed peek on iterator to not be mutable. Now get field, not need a mutable row.
+- Non mutable peek, allow to repair macros get_Str, get string, get_str_utf8
 
 ---
 

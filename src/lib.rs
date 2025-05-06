@@ -49,7 +49,7 @@ mod test {
     use std::sync::{Arc, Mutex};
     use crate::csv::csv_reader::CsvReaderWithMap;
     use crate::decoders::decoders::Encoding;
-    use crate::{get_bool, get_f64, get_str};
+    use crate::{get_bool, get_f64};
     use crate::models::csv_config::CsvConfig;
     use crate::models::row::Row;
     use crate::models::shared::Shared;
@@ -77,18 +77,18 @@ mod test {
         let mut cities :HashSet<String>= HashSet::with_capacity(195);
 
 
-        //Iter over rows
-        while let Some(mut row) = f.next_raw() {
+        //Iter over rows [no more need to be mutable]
+        while let Some(row) = f.next_raw() {
             //Extract Field index 6 starting on 0
             let city = row.get_index(6 );
             // Decode bytes as &str
             let name = city.get_utf8_as_str();
             let _ = get_bool!(row,1);
-
-
-
-
             let num = city.get_i8();
+
+
+            let city = row.get_index(6 ).get_as_cow_decoded(Encoding::Windows1252).as_ref();
+            let city = row.get_index(7 ).get_utf8_as_str();
             //Check and accumulate
             if !cities.contains(name){
                 cities.insert(name.to_string());
