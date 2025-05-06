@@ -143,7 +143,7 @@ macro_rules! get_str_utf8 {
 #[macro_export]
 macro_rules! get_string {
     ($row:expr, $idx:expr, $enc: expr) => {
-        $row.get_index($idx).get_as_string($enc).as_ref()
+        $row.get_index($idx).get_as_string($enc)
     };
 }
 
