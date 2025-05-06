@@ -118,6 +118,16 @@ macro_rules! get_str {
     };
 }
 
+/// ## Macro `get_cow!`
+/// - Returns a `Cow<str>` decoded using the specified encoding.
+/// - Uses `.get_as_cow_decoded(encoding)`.
+#[macro_export]
+macro_rules! get_cow {
+    ($row:expr, $idx:expr, $enc: expr) => {
+        $row.get_index($idx).get_as_cow_decoded($enc)
+    };
+}
+
 /// ## Macro `get_str_utf8!`
 /// - Returns the UTF-8 `&str` from the field content.
 /// - No decoding applied.
