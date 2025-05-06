@@ -77,7 +77,6 @@ mod test {
         let mut cities :HashSet<String>= HashSet::with_capacity(195);
 
 
-        let mut rows :Vec<&Row> = Vec::with_capacity(24);
         //Iter over rows
         while let Some(mut row) = f.next_raw() {
             //Extract Field index 6 starting on 0
@@ -85,7 +84,6 @@ mod test {
             // Decode bytes as &str
             let name = city.get_utf8_as_str();
             let _ = get_bool!(row,1);
-            rows.push(&row);
 
 
 
