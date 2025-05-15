@@ -4,14 +4,14 @@ use crate::decoders::decoders::Encoding;
 /// A fast and configurable CSV writer with optional encoding support.
 ///
 /// Designed for high-performance batch writing with buffered I/O.
-pub struct CsvWriter<W: Write> {
+pub struct CsvWriter<'a, W: Write> {
     writer: BufWriter<W>,
     delimiter: u8,
-    line_break: &'static [u8],
+    line_break: &'a [u8],
     encoder: Encoding,
 }
 
-impl<W: Write> CsvWriter<W> {
+impl<'a, W: Write> CsvWriter<'a, W> {
     /// Creates a new `CsvWriter` wrapping the provided writer.
     ///
     /// # Arguments
@@ -20,7 +20,7 @@ impl<W: Write> CsvWriter<W> {
     /// * `delimiter` - The byte used to separate fields (e.g., `b','`).
     /// * `line_break` - The byte sequence for line endings (e.g., `b"\n"` or `b"\r\n"`).
     /// * `encoding` - Text encoding to use when writing string fields.
-    pub fn new(inner: W, delimiter: u8, line_break: &'static [u8], encoding: Encoding) -> Self {
+    pub fn new(inner: W, delimiter: u8, line_break: &'a [u8], encoding: Encoding) -> Self {
         Self {
             writer: BufWriter::with_capacity(64 * 1024, inner),
             delimiter,

@@ -29,7 +29,6 @@
 //! ## Contact
 //! If you have any questions, contact me on [LinkedIn](https://www.linkedin.com/in/ignacio-p%C3%A9rez-panizza-322844165/)
 
-
 extern crate core;
 
 pub mod models;
@@ -45,18 +44,18 @@ pub mod macros;
 
 #[cfg(test)]
 mod test {
-    use std::collections::HashSet;
-    use std::sync::{Arc, Mutex};
     use crate::csv::csv_reader::CsvReaderWithMap;
     use crate::decoders::decoders::Encoding;
-    use crate::{get_bool, get_f64, get_i32, get_str};
     use crate::models::csv_config::CsvConfig;
-    use crate::models::row::Row;
     use crate::models::shared::Shared;
     use crate::parallel::parallel_reader::parallel_processing_csv;
     use crate::parallel::row_parallel::RowParallel;
+    use crate::{get_bool, get_i32, get_str};
+    use std::collections::HashSet;
+    use std::sync::{Arc, Mutex};
 
     #[test]
+    #[allow(dead_code, unused_assignments,unused_variables)]
     fn read_csv_one_core(){
         //Create Config
         let cfg = CsvConfig::new(
@@ -98,6 +97,7 @@ mod test {
         assert_ne!(cities.len(), 0);
     }
     #[test]
+    #[allow(dead_code, unused_assignments,unused_variables)]
     fn read_csv_multicore(){
         //Create Config
         let cfg = CsvConfig::new(

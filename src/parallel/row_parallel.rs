@@ -109,12 +109,12 @@ mod tests {
         // Closure that extracts second field (index 1) and pushes it into the shared vector
         let closure = |row: &mut RowParallel, _thread_id: usize, param: Arc<Mutex<Vec<String>>>| {
             if ctr < 2 { //la ultima ila le hace con peek
-                let mut row_struct = row.get_row();
+                let row_struct = row.get_row();
                 let field = row_struct.get_index(1);
                 let value = field.get_utf8_as_str();
                 let mut guard = param.lock().unwrap();
                 guard.push(value.to_string());
-                let mut next = row.peek_next();
+                let next = row.peek_next();
                 let filed_1 = next.get_index(1);
                 let v= filed_1.get_utf8_as_str();
                 if ctr ==1 && !next.is_empty(){
