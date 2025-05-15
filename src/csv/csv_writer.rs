@@ -1,4 +1,4 @@
-use std::io::{BufWriter, Write};
+use std::io::{BufWriter, IntoInnerError, Write};
 use crate::decoders::decoders::Encoding;
 
 /// A fast and configurable CSV writer with optional encoding support.
@@ -108,6 +108,10 @@ impl<'a, W: Write> CsvWriter<'a, W> {
 
         self.writer.write_all(&tmp[..cursor])?;
         Ok(())
+    }
+    pub fn flush_and_get(mut self) -> Result<W, IntoInnerError<BufWriter<W>>> {
+        _ = self.flush();
+        self.writer.into_inner()
     }
 
     /// Forces all buffered data to be written.
