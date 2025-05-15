@@ -90,6 +90,7 @@ impl<'mmap> InRowIter<'mmap> {
     #[inline(always)]
     /// ## Peek Field At Index
     /// - Returns the field at a specific index without modifying the internal cursor.
+    #[allow(unused_assignments)]
     pub fn peek_field_index(&self, target: usize) -> Option<&'mmap [u8]> {
         let mut count = 0;
         let mut pos = 0usize;
