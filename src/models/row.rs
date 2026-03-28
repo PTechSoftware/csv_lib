@@ -1,19 +1,20 @@
-use std::borrow::Cow;
 use crate::decoders::decoders::Encoding;
-use crate::helpers::bytes_helper::locate_line_break_memchr3;
-use crate::models::field::Field;
 #[cfg(target_arch = "x86_64")]
 use crate::helpers::bytes_helper::locate_line_break_avx2;
+use crate::helpers::bytes_helper::locate_line_break_memchr3;
+use crate::models::field::Field;
 use crate::models::in_row_iter::InRowIter;
+use std::borrow::Cow;
 
 #[derive(Debug)]
 #[allow(dead_code)]
-pub struct Row<'mmap>{
-    slice: &'mmap[u8],
+pub struct Row<'mmap> {
+    slice: &'mmap [u8],
     cursor: usize,
     field_separator: u8,
+    string_delimiter: u8,
     force_mem_cacher: bool,
-    iter : InRowIter<'mmap>,
+    iter: InRowIter<'mmap>,
 }
 
 impl<'mmap> Row<'mmap> {
@@ -30,8 +31,9 @@ impl<'mmap> Row<'mmap> {
             slice,
             cursor: 0,
             field_separator,
+            string_delimiter,
             force_mem_cacher,
-            iter : i,
+            iter: i,
         }
     }
     /// ## Creates a new Empty row
@@ -40,17 +42,18 @@ impl<'mmap> Row<'mmap> {
             slice: &[],
             cursor: 0,
             field_separator: 0,
+            string_delimiter: 0,
             force_mem_cacher: false,
-            iter : InRowIter::new(&[], 0, 0),
+            iter: InRowIter::new(&[], 0, 0),
         }
     }
-    
+
     /// ## Is Empty
     /// - Gets if a row is empty
     pub fn is_empty(&self) -> bool {
         self.slice.is_empty()
     }
-    
+
     /// ## Get Slice of &[[u8]] bytes
     /// - Gets a reference of the bytes inside row.
     /// #### `returns` : &'mmap [[u8]]
@@ -68,30 +71,31 @@ impl<'mmap> Row<'mmap> {
         //If we move here the cfg, and target compariision, is faster. only doit once, and not on each line iter.
         if self.force_mem_cacher {
             return match self.next_raw_memchr3() {
-                Some(row) => Some(Field::new(row)),
-                None => None
-            }
+                Some(row) => Some(Field::new(row, self.string_delimiter)),
+                None => None,
+            };
         }
         #[cfg(target_arch = "x86_64")]
         {
             //En x86, si soporta avx2 lo uso
             if is_x86_feature_detected!("avx2") {
-                match unsafe{ self.new_raw_avx2() }{
-                    Some(row) => Some(Field::new(row)),
-                    None => None
+                match unsafe { self.new_raw_avx2() } {
+                    Some(row) => Some(Field::new(row, self.string_delimiter)),
+                    None => None,
                 }
-            }else{
+            } else {
                 //En x86, si no soporta avx2, uso el memcach3
-                match self.next_raw_memchr3(){
-                    Some(row) => Some(Field::new(row)),
-                    None => None
+                match self.next_raw_memchr3() {
+                    Some(row) => Some(Field::new(row, self.string_delimiter)),
+                    None => None,
                 }
             }
         }
-        #[cfg(target_arch = "aarch64")]{
-             match self.new_raw_neon(){
-                Some(row) => Some(Field::new(row)),
-                None => None
+        #[cfg(target_arch = "aarch64")]
+        {
+            match self.new_raw_neon() {
+                Some(row) => Some(Field::new(row, self.string_delimiter)),
+                None => None,
             }
         }
     }
@@ -103,26 +107,27 @@ impl<'mmap> Row<'mmap> {
     pub fn get_index(&self, index: usize) -> Field<'mmap> {
         let data = &self.iter.peek_field_index(index);
         match data {
-            Some(f) => Field::new(f),
-            None => Field::new_empty()
+            Some(f) => Field::new(f, self.string_delimiter),
+            None => Field::new_empty(self.string_delimiter),
         }
     }
     /// ## Decodes the full line
     /// - Must give the encoding.
-    pub fn decode_line(&mut self, enc: Encoding) -> Cow<str>{
-         enc.decode(self.slice)
+    pub fn decode_line(&mut self, enc: Encoding) -> Cow<str> {
+        enc.decode(self.slice)
     }
-    
+
     //------------------------------------------------------------//
     //--------------------- PRIVATE ------------------------------//
     //------------------------------------------------------------//
     #[cfg(target_arch = "aarch64")]
-    fn new_raw_neon(&mut self) -> Option<&'mmap[u8]> {
+    fn new_raw_neon(&mut self) -> Option<&'mmap [u8]> {
         unsafe {
             // Obtain the unmapped slice starting from the cursor
             let slice = &self.slice[self.cursor..];
             // Locate the break index
-            match crate::helpers::bytes_helper::locate_line_break_neon(slice, self.field_separator) {
+            match crate::helpers::bytes_helper::locate_line_break_neon(slice, self.field_separator)
+            {
                 0 => {
                     // EOF, reset cursor
                     self.reset_cursor();
@@ -155,7 +160,7 @@ impl<'mmap> Row<'mmap> {
     }
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "avx2")]
-    unsafe fn new_raw_avx2(&mut self) -> Option<&'mmap[u8]> {
+    unsafe fn new_raw_avx2(&mut self) -> Option<&'mmap [u8]> {
         unsafe {
             let slice = &self.slice[self.cursor..];
 
@@ -186,15 +191,11 @@ impl<'mmap> Row<'mmap> {
         }
     }
 
-    fn next_raw_memchr3(&mut self) -> Option<&'mmap[u8]> {
+    fn next_raw_memchr3(&mut self) -> Option<&'mmap [u8]> {
         //determine the tos end slice
-        let slice = &self.slice[self.cursor ..];
+        let slice = &self.slice[self.cursor..];
         //Determine the line break cursor position
-        match locate_line_break_memchr3(
-            slice,
-            self.cursor,
-            self.field_separator
-        ) {
+        match locate_line_break_memchr3(slice, self.cursor, self.field_separator) {
             0 => {
                 //EOF, so, reset cursor
                 self.reset_cursor();
@@ -202,9 +203,9 @@ impl<'mmap> Row<'mmap> {
             }
             i => {
                 //Take a reference of the map file
-                let map =  &self.slice[..];
+                let map = &self.slice[..];
                 //Return the byte slice of a row
-                let row = &map[self.cursor .. i];
+                let row = &map[self.cursor..i];
                 //Move the cursor position
                 self.cursor = i;
                 //Extract the byte line
@@ -218,4 +219,3 @@ impl<'mmap> Row<'mmap> {
         self.cursor = 0;
     }
 }
-

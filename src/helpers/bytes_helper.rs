@@ -1,4 +1,4 @@
-use memchr::{memchr2, memchr3};
+use memchr::{memchr, memchr2, memchr3, memrchr};
 //=================================================================//
 //=====================   PUBLIC  FUNCTIONS   =====================//
 //=================================================================//
@@ -24,6 +24,27 @@ pub(crate) fn locate_line_break_memchr3(slice: &[u8], cursor: usize, separator: 
         })
     };
     r.unwrap_or_else(|| 0)
+}
+
+/// ## Find Delimiter Bounds
+/// - Finds the first and last occurrence of a delimiter in a slice.
+/// - Uses SIMD under the hood via memchr and memrchr.
+pub(crate) fn find_delimiter_bounds(slice: &[u8], delimiter: u8) -> Option<(usize, usize)> {
+    let first = memchr(delimiter, slice)?;
+    let last = memrchr(delimiter, slice)?;
+    Some((first, last))
+}
+
+/// ## Get Cleaned Slice
+/// - Returns a slice without the delimiters if they are at the first and last position.
+pub(crate) fn get_cleaned(slice: &[u8], delimiter: u8) -> &[u8] {
+    if delimiter == 0 || slice.len() < 2 {
+        return slice;
+    }
+    if let Some((first, last)) = find_delimiter_bounds(slice, delimiter) {
+        return &slice[first + 1..last];
+    }
+    slice
 }
 
 /// ## Locate Line Break AVX2
